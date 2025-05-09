@@ -2,7 +2,7 @@ services:
   db_pg:
     image: postgres:latest
     environment:
-      POSTGRES_DB: myvet
+      POSTGRES_DB: voltconnect
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     healthcheck:

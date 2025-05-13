@@ -26,6 +26,8 @@
         <junit-platform-suite.version>1.12.1</junit-platform-suite.version>
         <junit-jupiter.version>5.12.1</junit-jupiter.version>
         <selenium.version>4.21.0</selenium.version>
+        <sonar.organization>tqs-voltconnect</sonar.organization>
+        <sonar.host.url>https://sonarcloud.io</sonar.host.url>
     </properties>
 
     <dependencies>

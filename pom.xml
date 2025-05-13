@@ -31,6 +31,15 @@
     </properties>
 
     <dependencies>
+
+        <!-- Xray -->
+        <dependency>
+            <groupId>app.getxray</groupId>
+            <artifactId>xray-junit-extensions</artifactId>
+            <version>0.10.0</version>
+            <scope>test</scope>
+        </dependency>
+
         <!-- Spring Boot Core -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

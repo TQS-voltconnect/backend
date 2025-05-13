@@ -1,0 +1,30 @@
+name: Xray
+
+on:
+  push:
+    branches:
+      - develop
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: 21
+          distribution: 'zulu'  # or 'temurin' if you prefer
+      - name: Build and test
+        working-directory: backend
+        run: mvn clean install
+
+      - name: Import results to Xray
+        uses: mikepenz/xray-action@v3
+        with:
+          username: ${{ secrets.xray_client_id }}
+          password: ${{ secrets.xray_client_secret }}
+          testformat: "junit"
+          testpaths: "backend/target/surefire-reports/TEST-*.xml"
+          projectkey: "JOLTEON"

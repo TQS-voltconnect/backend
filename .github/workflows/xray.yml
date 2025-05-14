@@ -5,6 +5,7 @@ on:
     branches:
       - dev
       - main
+      - tests/setup
 
 jobs:
   build:
@@ -17,7 +18,6 @@ jobs:
           java-version: 21
           distribution: 'zulu'  # or 'temurin' if you prefer
       - name: Build and test
-        working-directory: backend
         run: mvn clean install
 
       - name: Import results to Xray
@@ -26,5 +26,5 @@ jobs:
           username: ${{ secrets.xray_client_id }}
           password: ${{ secrets.xray_client_secret }}
           testformat: "junit"
-          testpaths: "backend/target/surefire-reports/TEST-*.xml"
-          projectkey: "JOLTEON"
+          testpaths: "target/surefire-reports/TEST-*.xml"
+          projectkey: "VOLT"

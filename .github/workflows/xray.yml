@@ -3,7 +3,7 @@ name: Xray
 on:
   push:
     branches:
-      - develop
+      - dev
       - main
 
 jobs:

@@ -4,7 +4,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import pt.ua.tqs.voltconnect.models.Charger;
+import pt.ua.tqs.voltconnect.models.ChargingStation;
 import pt.ua.tqs.voltconnect.services.ChargerService;
+import pt.ua.tqs.voltconnect.services.ChargingStationService;
 
 import java.util.List;
 
@@ -15,6 +17,9 @@ public class ChargerController {
 
     @Autowired
     private ChargerService chargerService;
+
+    @Autowired
+    private ChargingStationService stationService;
 
     @GetMapping
     public List<Charger> getAllChargers() {
@@ -34,9 +39,19 @@ public class ChargerController {
     }
 
     @PostMapping
-    public Charger createCharger(@RequestBody Charger charger) {
-        return chargerService.saveCharger(charger);
-    }
+    public ResponseEntity<Charger> createCharger(@RequestBody Charger charger) {
+        Long stationId = charger.getChargingStation().getId(); 
+        ChargingStation station = stationService.findById(stationId);
+        charger.setChargingStation(station);
+        Charger saved = chargerService.saveCharger(charger);
+        return ResponseEntity.ok(saved);
+    }    
+
+    // @PostMapping
+    // public Charger createCharger(@RequestBody Charger charger, 
+    //                               @RequestParam Long stationId) {
+    //     return chargerService.saveCharger(charger, charger.getChargingStation());
+    // }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteCharger(@PathVariable Long id) {

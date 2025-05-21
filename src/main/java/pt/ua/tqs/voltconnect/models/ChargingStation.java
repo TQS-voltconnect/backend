@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 @Entity
@@ -21,23 +23,19 @@ public class ChargingStation {
 
     private Long operatorId;
 
-    // @Id
-    // @GeneratedValue(strategy = GenerationType.IDENTITY)
-    // private Long id;
 
-    // @Column(name = "latitude")
-    // private Float latitude;
+    @OneToMany(mappedBy = "chargingStation", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @JsonManagedReference
+    private List<Charger> chargers;
 
-    // @Column(name = "longitude")
-    // private Float longitude;
+    public void addCharger(Charger charger) {
+        chargers.add(charger);
+        charger.setChargingStation(this);
+    }
 
-    // @Column(name = "operator_id")
-    // private Long operatorId;
-
-    // private Double pricePerKWh;
-
-    // @OneToMany(mappedBy = "chargingStation", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    // @JsonManagedReference
-    // private List<Charger> chargers;
+    public void removeCharger(Charger charger) {
+        chargers.remove(charger);
+        charger.setChargingStation(null);
+    }
 
 }

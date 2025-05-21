@@ -8,11 +8,13 @@ import java.util.Optional;
 public interface ChargingStationService {
     List<ChargingStation> getAllStations();
 
-    Optional<ChargingStation> getStationById(Long id);
-
+    ChargingStation findById(Long id);
+        
     List<ChargingStation> getStationsByOperatorId(Long operatorId);
 
     ChargingStation saveStation(ChargingStation station);
 
     void deleteStation(Long id);
+
+    
 }

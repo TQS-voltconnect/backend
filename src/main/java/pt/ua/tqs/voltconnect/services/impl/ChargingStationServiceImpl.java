@@ -21,8 +21,9 @@ public class ChargingStationServiceImpl implements ChargingStationService {
     }
 
     @Override
-    public Optional<ChargingStation> getStationById(Long id) {
-        return stationRepository.findById(id);
+    public ChargingStation findById(Long id) {
+        return stationRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Station not found"));
     }
 
     @Override

@@ -1,11 +1,9 @@
 package pt.ua.tqs.voltconnect.controllers;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import pt.ua.tqs.voltconnect.models.ChargingStation;
 import pt.ua.tqs.voltconnect.services.ChargingStationService;
-import org.springframework.http.MediaType;
 
 import java.util.List;
 
@@ -26,6 +24,8 @@ public class ChargingStationController {
         ChargingStation savedStation = stationService.saveStation(station);
         return ResponseEntity.ok(savedStation);
     }
+
+    
     // @Autowired
     // private ChargingStationService stationService;
 
@@ -36,15 +36,18 @@ public class ChargingStationController {
     //     return ResponseEntity.ok(savedStation);
     // }
     
-    // @GetMapping
-    // public List<ChargingStation> getAllStations() {
-    //     return stationService.getAllStations();
-    // }
+    @GetMapping
+    public List<ChargingStation> getAllStations() {
+        return stationService.getAllStations();
+    }
 
-    // @GetMapping("/{id}")
-    // public ResponseEntity<ChargingStation> getStationById(@PathVariable Long id) {
-    //     return stationService.getStationById(id)
-    //             .map(ResponseEntity::ok)
-    //             .orElse(ResponseEntity.notFound().build());
-    // }
+    @GetMapping("/{id}")
+    public ResponseEntity<ChargingStation> getStationById(@PathVariable Long id) {
+        ChargingStation station = stationService.findById(id);
+        if (station != null) {
+            return ResponseEntity.ok(station);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
 }

@@ -1,8 +1,8 @@
 package pt.ua.tqs.voltconnect.models;
 
-import com.fasterxml.jackson.annotation.JsonGetter;
 import jakarta.persistence.*;
 import lombok.*;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 
 @Entity
 @Data
@@ -36,12 +36,8 @@ public class Charger {
     }
 
     @ManyToOne
-    @JoinColumn(name = "station_id")
+    @JoinColumn(name = "station_id", nullable = false)
+    @JsonBackReference
     private ChargingStation chargingStation;
 
-    // Faz com que no JSON só devolva o ID da station
-    @JsonGetter("stationId")
-    public Long getStationId() {
-        return chargingStation != null ? chargingStation.getId() : null;
-    }
 }

@@ -1,3 +1,10 @@
+CREATE TABLE IF NOT EXISTS app_user (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    role VARCHAR(50) NOT NULL
+);
+
 DELETE FROM app_user;
 
 INSERT INTO app_user (name, email, role) VALUES

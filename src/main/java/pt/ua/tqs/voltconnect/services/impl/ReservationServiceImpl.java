@@ -2,6 +2,7 @@
 package pt.ua.tqs.voltconnect.services.impl;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -36,29 +37,39 @@ public class ReservationServiceImpl implements ReservationService {
 
     @Override
     public Reservation createReservation(Reservation reservation) {
+        if (reservation.getVehicleId() == null) {
+            throw new IllegalArgumentException("vehicleId cannot be null");
+        }
+        if (reservation.getChargingStationId() == null) {
+            throw new IllegalArgumentException("chargingStationId cannot be null");
+        }
+        if (reservation.getChargerId() == null) {
+            throw new IllegalArgumentException("chargerId cannot be null");
+        }
+
         if (reservation.getStartTime() == null || reservation.getStartTime().before(new Date())) {
             throw new IllegalArgumentException("Start time must be a future date");
         }
 
         ChargingStation station = chargingStationRepository.findById(reservation.getChargingStationId())
-            .orElseThrow(() -> new IllegalArgumentException("Charging station not found"));
+                .orElseThrow(() -> new IllegalArgumentException("Charging station not found"));
 
         boolean chargerBelongsToStation = station.getChargers()
-            .stream()
-            .anyMatch(charger -> charger.getId().equals(reservation.getChargerId()));
+                .stream()
+                .anyMatch(charger -> charger.getId().equals(reservation.getChargerId()));
 
         if (!chargerBelongsToStation) {
             throw new IllegalArgumentException("Charger does not belong to the specified charging station");
         }
 
         Charger charger = station.getChargers()
-            .stream()
-            .filter(c -> c.getId().equals(reservation.getChargerId()))
-            .findFirst()
-            .orElseThrow();
+                .stream()
+                .filter(c -> c.getId().equals(reservation.getChargerId()))
+                .findFirst()
+                .orElseThrow();
 
         Vehicle vehicle = vehicleRepository.findById(reservation.getVehicleId())
-            .orElseThrow(() -> new IllegalArgumentException("Vehicle not found"));
+                .orElseThrow(() -> new IllegalArgumentException("Vehicle not found"));
 
         boolean acceptsChargerType;
         if (charger.getChargerType().name().startsWith("AC")) {
@@ -75,15 +86,11 @@ public class ReservationServiceImpl implements ReservationService {
 
         double chargingTimeMinutes;
         if (charger.getChargerType() == Charger.Type.DC && vehicle.getDcChargerJson() != null) {
-            // Usa curva de carga para cálculo detalhado
-
-            // Classe interna para representar pontos da curva
             class CurvePoint {
                 public int percentage;
                 public double power;
             }
 
-            // Desserializa charging_curve JSON
             ObjectMapper mapper = new ObjectMapper();
             JsonNode dcChargerNode;
             try {
@@ -96,7 +103,6 @@ public class ReservationServiceImpl implements ReservationService {
                 throw new IllegalArgumentException("Invalid or missing charging_curve data");
             }
 
-            // Converte array JSON em lista de pontos
             List<CurvePoint> curvePoints = new ArrayList<>();
             for (JsonNode pointNode : curveNode) {
                 CurvePoint p = new CurvePoint();
@@ -105,10 +111,8 @@ public class ReservationServiceImpl implements ReservationService {
                 curvePoints.add(p);
             }
 
-            // Calcula energia total (kWh) = usableBatterySize
             double totalEnergy = vehicle.getUsableBatterySize();
 
-            // Soma tempo segmentado
             chargingTimeMinutes = 0.0;
             for (int i = 0; i < curvePoints.size() - 1; i++) {
                 CurvePoint start = curvePoints.get(i);
@@ -123,24 +127,38 @@ public class ReservationServiceImpl implements ReservationService {
                     throw new IllegalArgumentException("Invalid average power in charging curve");
                 }
 
-                double segmentTime = (energySegment / avgPower) * 60.0; // minutos
+                double segmentTime = (energySegment / avgPower) * 60.0;
                 chargingTimeMinutes += segmentTime;
             }
 
         } else {
-            // Para AC ou se não houver curva, calcula linearmente
             chargingTimeMinutes = (vehicle.getUsableBatterySize() / charger.getChargingSpeed()) * 60.0;
         }
 
-        reservation.setChargingTime((long) Math.ceil(chargingTimeMinutes));
+        long chargingTimeLong = (long) Math.ceil(chargingTimeMinutes);
+        reservation.setChargingTime(chargingTimeLong);
 
-        // Calcula preço
+        Date start = reservation.getStartTime();
+        Date end = new Date(start.getTime() + chargingTimeLong * 60_000);
+
+        List<Reservation> existingReservations = reservationRepository.findByChargerId(reservation.getChargerId());
+        for (Reservation r : existingReservations) {
+            Date rStart = r.getStartTime();
+            Date rEnd = new Date(rStart.getTime() + r.getChargingTime() * 60_000);
+            boolean overlap = start.before(rEnd) && end.after(rStart);
+            if (overlap) {
+                throw new IllegalArgumentException("Reservation conflicts with an existing reservation");
+            }
+        }
+
         double price = vehicle.getUsableBatterySize() * charger.getPricePerKWh();
+        price = Math.round(price * 100.0) / 100.0;
         reservation.setPrice(price);
+
+        charger.setChargerStatus(Charger.Status.OCCUPIED);
 
         return reservationRepository.save(reservation);
     }
-  
 
     @Override
     public Optional<Reservation> getReservationById(Long id) {

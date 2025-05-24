@@ -31,4 +31,11 @@ public class VehicleController {
     public ResponseEntity<List<VehicleDTO>> getByBrand(@PathVariable String name) {
         return ResponseEntity.ok(vehicleService.getVehiclesByBrand(name));
     }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<VehicleDTO> getById(@PathVariable String id) {
+        return vehicleService.getVehicleById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
 }

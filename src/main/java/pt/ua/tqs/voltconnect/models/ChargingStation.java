@@ -34,7 +34,7 @@ public class ChargingStation {
     }
 
     public void removeCharger(Charger charger) {
-        chargers.remove(charger);
+        chargers.remove(charger);   
         charger.setChargingStation(null);
     }
 

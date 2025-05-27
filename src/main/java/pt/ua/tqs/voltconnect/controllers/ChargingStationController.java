@@ -9,7 +9,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/stations")
-@CrossOrigin(origins = "*") // Add this
 public class ChargingStationController {
 
     private final ChargingStationService stationService;

@@ -43,11 +43,12 @@ public class ChargingStationController {
 
     @GetMapping("/{id}")
     public ResponseEntity<ChargingStation> getStationById(@PathVariable Long id) {
-        ChargingStation station = stationService.findById(id);
-        if (station != null) {
+        try {
+            ChargingStation station = stationService.findById(id);
             return ResponseEntity.ok(station);
-        } else {
+        } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
         }
     }
+    
 }

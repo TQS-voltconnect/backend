@@ -15,8 +15,6 @@ public class Charger {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long chargingTime;
-
     @Enumerated(EnumType.STRING)
     private Status chargerStatus;
 

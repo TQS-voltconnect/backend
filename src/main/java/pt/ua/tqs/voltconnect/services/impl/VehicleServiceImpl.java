@@ -18,6 +18,7 @@ import pt.ua.tqs.voltconnect.services.VehicleService;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -117,5 +118,11 @@ public class VehicleServiceImpl implements VehicleService {
         return vehicleRepository.findByBrand_NameIgnoreCase(brandName).stream()
                 .map(VehicleMapper::toDTO)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public Optional<VehicleDTO> getVehicleById(String id) {
+        return vehicleRepository.findById(id)
+                .map(VehicleMapper::toDTO);
     }
 }

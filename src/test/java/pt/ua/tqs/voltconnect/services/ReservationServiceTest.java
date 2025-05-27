@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
+
 import pt.ua.tqs.voltconnect.models.*;
 import pt.ua.tqs.voltconnect.repositories.*;
 import pt.ua.tqs.voltconnect.services.impl.ReservationServiceImpl;
@@ -42,7 +43,6 @@ public class ReservationServiceTest {
 
     @BeforeEach
     void setUp() {
-        // Reserva padrão com data no futuro
         reservation = Reservation.builder()
                 .userId(1L)
                 .vehicleId("vehicle-uuid")
@@ -51,33 +51,28 @@ public class ReservationServiceTest {
                 .startTime(new Date(System.currentTimeMillis() + 3600_000))
                 .build();
 
-        // Carregador AC
         chargerAC = new Charger();
         chargerAC.setId(100L);
         chargerAC.setChargerType(Charger.Type.AC2);
         chargerAC.setChargingSpeed(22.0);
         chargerAC.setPricePerKWh(0.25);
 
-        // Carregador DC
         chargerDC = new Charger();
         chargerDC.setId(101L);
         chargerDC.setChargerType(Charger.Type.DC);
         chargerDC.setChargingSpeed(50.0);
         chargerDC.setPricePerKWh(0.45);
 
-        // Estação com dois carregadores
         station = new ChargingStation();
         station.setId(1L);
         station.setChargers(List.of(chargerAC, chargerDC));
 
-        // Veículo que aceita AC
         vehicleWithAC = new Vehicle();
         vehicleWithAC.setId("vehicle-ac");
         vehicleWithAC.setUsableBatterySize(42.2);
-        vehicleWithAC.setAcChargerJson("{}"); // aceita AC
+        vehicleWithAC.setAcChargerJson("{}");
         vehicleWithAC.setDcChargerJson(null);
 
-        // Veículo que aceita DC com curva
         vehicleWithDC = new Vehicle();
         vehicleWithDC.setId("vehicle-dc");
         vehicleWithDC.setUsableBatterySize(42.2);
@@ -85,7 +80,6 @@ public class ReservationServiceTest {
         vehicleWithDC.setDcChargerJson(
                 "{\"charging_curve\":[{\"percentage\":0,\"power\":80.75},{\"percentage\":50,\"power\":85},{\"percentage\":80,\"power\":42.5},{\"percentage\":100,\"power\":17}]}");
 
-        // Veículo que não aceita nenhum carregador
         vehicleWithNoCharger = new Vehicle();
         vehicleWithNoCharger.setId("vehicle-none");
         vehicleWithNoCharger.setUsableBatterySize(42.2);
@@ -94,12 +88,31 @@ public class ReservationServiceTest {
     }
 
     @Test
-    void createReservation_ValidACCharger_Success() throws Exception {
+    void createReservation_VehicleIdNull_Throws() {
+        reservation.setVehicleId(null);
+        assertThrows(IllegalArgumentException.class, () -> reservationService.createReservation(reservation));
+    }
+
+    @Test
+    void createReservation_ChargingStationIdNull_Throws() {
+        reservation.setChargingStationId(null);
+        assertThrows(IllegalArgumentException.class, () -> reservationService.createReservation(reservation));
+    }
+
+    @Test
+    void createReservation_ChargerIdNull_Throws() {
+        reservation.setChargerId(null);
+        assertThrows(IllegalArgumentException.class, () -> reservationService.createReservation(reservation));
+    }
+
+    @Test
+    void createReservation_ValidACCharger_Success() {
         reservation.setChargerId(chargerAC.getId());
         reservation.setVehicleId(vehicleWithAC.getId());
 
         when(chargingStationRepository.findById(station.getId())).thenReturn(Optional.of(station));
         when(vehicleRepository.findById(vehicleWithAC.getId())).thenReturn(Optional.of(vehicleWithAC));
+        when(reservationRepository.findByChargerId(chargerAC.getId())).thenReturn(Collections.emptyList());
         when(reservationRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
         Reservation saved = reservationService.createReservation(reservation);
@@ -111,12 +124,13 @@ public class ReservationServiceTest {
     }
 
     @Test
-    void createReservation_ValidDCChargerWithCurve_Success() throws Exception {
+    void createReservation_ValidDCChargerWithCurve_Success() {
         reservation.setChargerId(chargerDC.getId());
         reservation.setVehicleId(vehicleWithDC.getId());
 
         when(chargingStationRepository.findById(station.getId())).thenReturn(Optional.of(station));
         when(vehicleRepository.findById(vehicleWithDC.getId())).thenReturn(Optional.of(vehicleWithDC));
+        when(reservationRepository.findByChargerId(chargerDC.getId())).thenReturn(Collections.emptyList());
         when(reservationRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
         Reservation saved = reservationService.createReservation(reservation);
@@ -178,12 +192,11 @@ public class ReservationServiceTest {
         when(chargingStationRepository.findById(station.getId())).thenReturn(Optional.of(station));
         when(vehicleRepository.findById(vehicleWithAC.getId())).thenReturn(Optional.of(vehicleWithAC));
 
-        // Simula reserva existente que conflita
         Reservation existingReservation = Reservation.builder()
-            .startTime(new Date(System.currentTimeMillis() + 3000_000)) // 50 minutos no futuro
-            .chargingTime(60L) // 60 minutos
-            .chargerId(chargerAC.getId())
-            .build();
+                .startTime(new Date(System.currentTimeMillis() + 3000_000))
+                .chargingTime(60L)
+                .chargerId(chargerAC.getId())
+                .build();
 
         when(reservationRepository.findByChargerId(chargerAC.getId())).thenReturn(List.of(existingReservation));
 
@@ -191,7 +204,7 @@ public class ReservationServiceTest {
     }
 
     @Test
-    void createReservation_ChargerIsMarkedOccupied() throws Exception {
+    void createReservation_ChargerIsMarkedOccupied() {
         reservation.setChargerId(chargerAC.getId());
         reservation.setVehicleId(vehicleWithAC.getId());
 
@@ -202,8 +215,81 @@ public class ReservationServiceTest {
 
         Reservation saved = reservationService.createReservation(reservation);
 
-        assertNotNull(saved);
         assertEquals(Charger.Status.OCCUPIED, chargerAC.getChargerStatus());
     }
 
+    @Test
+    void createReservation_InvalidDCJson_Throws() {
+        reservation.setChargerId(chargerDC.getId());
+
+        Vehicle vehicle = new Vehicle();
+        vehicle.setId("vehicle-invalid-json");
+        vehicle.setUsableBatterySize(42.2);
+        vehicle.setDcChargerJson("INVALID_JSON");
+
+        when(chargingStationRepository.findById(station.getId())).thenReturn(Optional.of(station));
+        when(vehicleRepository.findById(vehicle.getId())).thenReturn(Optional.of(vehicle));
+
+        reservation.setVehicleId(vehicle.getId());
+
+        assertThrows(IllegalArgumentException.class, () -> reservationService.createReservation(reservation));
+    }
+
+    @Test
+    void createReservation_DCChargerInvalidCurve_Throws() {
+        reservation.setChargerId(chargerDC.getId());
+
+        Vehicle vehicle = new Vehicle();
+        vehicle.setId("vehicle-invalid-curve");
+        vehicle.setUsableBatterySize(42.2);
+        vehicle.setDcChargerJson("{\"charging_curve\": []}");
+
+        when(chargingStationRepository.findById(station.getId())).thenReturn(Optional.of(station));
+        when(vehicleRepository.findById(vehicle.getId())).thenReturn(Optional.of(vehicle));
+
+        reservation.setVehicleId(vehicle.getId());
+
+        assertThrows(IllegalArgumentException.class, () -> reservationService.createReservation(reservation));
+    }
+
+    @Test
+    void createReservation_DCChargerAvgPowerZero_Throws() {
+        reservation.setChargerId(chargerDC.getId());
+
+        Vehicle vehicle = new Vehicle();
+        vehicle.setId("vehicle-zero-power");
+        vehicle.setUsableBatterySize(42.2);
+        vehicle.setDcChargerJson(
+                "{\"charging_curve\": [{\"percentage\": 0, \"power\": 0}, {\"percentage\": 100, \"power\": 0}]}");
+
+        when(chargingStationRepository.findById(station.getId())).thenReturn(Optional.of(station));
+        when(vehicleRepository.findById(vehicle.getId())).thenReturn(Optional.of(vehicle));
+
+        reservation.setVehicleId(vehicle.getId());
+
+        assertThrows(IllegalArgumentException.class, () -> reservationService.createReservation(reservation));
+    }
+
+    @Test
+    void getReservationById_ExistingId_ReturnsReservation() {
+        Reservation mockReservation = Reservation.builder().id(1L).build();
+        when(reservationRepository.findById(1L)).thenReturn(Optional.of(mockReservation));
+
+        Optional<Reservation> result = reservationService.getReservationById(1L);
+        assertTrue(result.isPresent());
+        assertEquals(1L, result.get().getId());
+    }
+
+    @Test
+    void getAllReservations_ReturnsAllReservations() {
+        List<Reservation> mockList = List.of(
+                Reservation.builder().id(1L).build(),
+                Reservation.builder().id(2L).build());
+
+        when(reservationRepository.findAll()).thenReturn(mockList);
+
+        Iterable<Reservation> result = reservationService.getAllReservations();
+        assertNotNull(result);
+        assertEquals(2, ((Collection<?>) result).size());
+    }
 }

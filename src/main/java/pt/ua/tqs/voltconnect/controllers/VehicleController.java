@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import pt.ua.tqs.voltconnect.dtos.VehicleDTO;
-import pt.ua.tqs.voltconnect.models.Vehicle;
 import pt.ua.tqs.voltconnect.services.VehicleService;
 
 import java.util.List;

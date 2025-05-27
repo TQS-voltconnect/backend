@@ -2,11 +2,11 @@ services:
   db_pg:
     image: postgres:latest
     environment:
-      POSTGRES_DB: voltconnect
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     healthcheck:
-      test: pg_isready -U postgres
+      test: pg_isready -U ${POSTGRES_USER}
       interval: 1m30s
       timeout: 30s
       retries: 3
@@ -18,4 +18,4 @@ services:
 
 volumes:
   pg_data:
-    driver: local 
+    driver: local

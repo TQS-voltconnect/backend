@@ -30,23 +30,25 @@ public class ChargingStationServiceImpl implements ChargingStationService {
     public List<ChargingStation> getStationsByOperatorId(Long operatorId) {
         return stationRepository.findByOperatorId(operatorId);
     }
-    
+
     @Override
     public ChargingStation saveStation(ChargingStation station) {
         return stationRepository.save(station);
     }
 
-    // @Override
-    // public ChargingStation saveStation(ChargingStation station) {
-    //     for (var charger : station.getChargers()) {
-    //             charger.setChargingStation(station);
-    //     }
-    //     }
-    //     return stationRepository.save(station);
-    // }    
 
     @Override
     public void deleteStation(Long id) {
+        if (!stationRepository.existsById(id)) {
+            throw new ChargingStationNotFoundException(id);
+        }
         stationRepository.deleteById(id);
     }
+
+    private static class ChargingStationNotFoundException extends RuntimeException {
+        public ChargingStationNotFoundException(Long id) {
+            super("Charging Station with ID " + id + " not found.");
+        }
+    }
+
 }

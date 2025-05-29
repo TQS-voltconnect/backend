@@ -75,8 +75,22 @@ public class ChargingStationServiceTest {
 
     @Test
     void deleteStation_DeletesSuccessfully() {
-        doNothing().when(stationRepository).deleteById(1L);
-        assertDoesNotThrow(() -> stationService.deleteStation(1L));
-        verify(stationRepository, times(1)).deleteById(1L);
+        Long id = 1L;
+
+        when(stationRepository.existsById(id)).thenReturn(true); // mocka a existência
+        doNothing().when(stationRepository).deleteById(id);
+
+        assertDoesNotThrow(() -> stationService.deleteStation(id));
+
+        verify(stationRepository, times(1)).deleteById(id);
     }
+
+    @Test
+    void deleteStation_NonExistingId_ThrowsException() {
+        Long nonExistentId = 999L;
+        when(stationRepository.existsById(nonExistentId)).thenReturn(false);
+
+        assertThrows(RuntimeException.class, () -> stationService.deleteStation(nonExistentId));
+    }
+
 }

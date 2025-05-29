@@ -11,6 +11,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import pt.ua.tqs.voltconnect.controllers.ChargingStationController;
 import pt.ua.tqs.voltconnect.models.ChargingStation;
 import pt.ua.tqs.voltconnect.services.ChargingStationService;
+import static org.mockito.Mockito.doThrow;
 
 import java.util.List;
 
@@ -40,7 +41,7 @@ class ChargingStationControllerIntegrationTest {
                 .city("Porto")
                 .location(List.of(41.1579f, -8.6291f))
                 .operatorId(100L)
-                .chargers(List.of()) // lista vazia, pode adicionar chargers se quiseres
+                .chargers(List.of()) 
                 .build();
     }
 
@@ -86,14 +87,32 @@ class ChargingStationControllerIntegrationTest {
                 .andExpect(jsonPath("$.operatorId").value(sampleStation.getOperatorId()));
     }
 
-
     @Test
     void getStationById_NotFound_ReturnsNotFound() throws Exception {
         when(stationService.findById(999L)).thenThrow(new RuntimeException("Station not found"));
 
         mockMvc.perform(get("/api/stations/999"))
-                .andExpect(status().isNotFound()); // <--- aqui 404 em vez de 500
+                .andExpect(status().isNotFound());
     }
 
-    
+    @Test
+    void deleteStation_ExistingId_ReturnsNoContent() throws Exception {
+
+        mockMvc.perform(delete("/api/stations/{id}", sampleStation.getId()))
+                .andExpect(status().isNoContent());
+    }
+
+
+    @Test
+    void deleteStation_NotFound_ReturnsNotFound() throws Exception {
+        Long nonExistingId = 999L;
+
+        doThrow(new RuntimeException("Station not found"))
+            .when(stationService).deleteStation(nonExistingId);
+
+        mockMvc.perform(delete("/api/stations/{id}", nonExistingId))
+                .andExpect(status().isNotFound());
+    }
+
+
 }

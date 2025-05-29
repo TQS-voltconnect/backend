@@ -34,6 +34,8 @@ public class Vehicle {
     @Column(columnDefinition = "TEXT")
     private String energyConsumptionJson;
 
+    @Column(columnDefinition = "TEXT")
     private String imageUrl;
+
     private LocalDateTime imageUpdatedAt;
 }

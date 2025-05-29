@@ -24,17 +24,6 @@ public class ChargingStationController {
         return ResponseEntity.ok(savedStation);
     }
 
-    // @Autowired
-    // private ChargingStationService stationService;
-
-    // // Explicitly define consumes and produces
-    // @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces =
-    // MediaType.APPLICATION_JSON_VALUE)
-    // public ResponseEntity<ChargingStation> createStation(@RequestBody
-    // ChargingStation station) {
-    // ChargingStation savedStation = stationService.saveStation(station);
-    // return ResponseEntity.ok(savedStation);
-    // }
 
     @GetMapping
     public List<ChargingStation> getAllStations() {

@@ -47,6 +47,10 @@ public class ChargingStationServiceImpl implements ChargingStationService {
 
     @Override
     public void deleteStation(Long id) {
+        if (!stationRepository.existsById(id)) {
+            throw new RuntimeException("Station not found");
+        }
         stationRepository.deleteById(id);
     }
+
 }

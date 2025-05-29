@@ -17,4 +17,6 @@ public interface ChargingStationService {
     void deleteStation(Long id);
 
     
+
+    
 }

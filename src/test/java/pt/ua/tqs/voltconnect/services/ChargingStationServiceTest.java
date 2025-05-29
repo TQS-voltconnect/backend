@@ -85,4 +85,12 @@ public class ChargingStationServiceTest {
         verify(stationRepository, times(1)).deleteById(id);
     }
 
+    @Test
+    void deleteStation_NonExistingId_ThrowsException() {
+        Long nonExistentId = 999L;
+        when(stationRepository.existsById(nonExistentId)).thenReturn(false);
+
+        assertThrows(RuntimeException.class, () -> stationService.deleteStation(nonExistentId));
+    }
+
 }

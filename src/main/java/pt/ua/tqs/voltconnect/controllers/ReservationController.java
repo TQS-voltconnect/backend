@@ -5,6 +5,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import pt.ua.tqs.voltconnect.models.Reservation;
+import pt.ua.tqs.voltconnect.models.PaymentRequest;
+import pt.ua.tqs.voltconnect.models.ErrorResponse;
 import pt.ua.tqs.voltconnect.services.ReservationService;
 
 import java.util.Optional;
@@ -38,5 +40,45 @@ public class ReservationController {
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok(reservationOpt.get());
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> cancelReservation(@PathVariable Long id) {
+        try {
+            reservationService.cancelReservation(id);
+            return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/{id}/start")
+    public ResponseEntity<?> startCharging(@PathVariable Long id) {
+        try {
+            Reservation updated = reservationService.startCharging(id);
+            return ResponseEntity.ok(updated);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
+        }
+    }
+
+    @PostMapping("/{id}/stop")
+    public ResponseEntity<?> stopCharging(@PathVariable Long id) {
+        try {
+            Reservation updated = reservationService.stopCharging(id);
+            return ResponseEntity.ok(updated);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/{id}/pay")
+    public ResponseEntity<?> processPayment(@PathVariable Long id, @RequestBody PaymentRequest paymentRequest) {
+        try {
+            Reservation updated = reservationService.processPayment(id, paymentRequest.getPaymentMethod());
+            return ResponseEntity.ok(updated);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 }

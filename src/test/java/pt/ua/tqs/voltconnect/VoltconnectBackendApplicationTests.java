@@ -2,11 +2,9 @@ package pt.ua.tqs.voltconnect;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
 
 @SpringBootTest
-@ActiveProfiles("test")
-class VoltconnectBackendApplicationTests {
+class VoltConnectApplicationTests {
 
     @Test
     void contextLoads() {

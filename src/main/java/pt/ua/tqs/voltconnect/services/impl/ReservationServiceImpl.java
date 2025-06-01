@@ -167,7 +167,7 @@ public class ReservationServiceImpl implements ReservationService {
         price = Math.round(price * 100.0) / 100.0;
         reservation.setPrice(price);
 
-        charger.setChargerStatus(Charger.Status.OCCUPIED);
+        //charger.setChargerStatus(Charger.Status.OCCUPIED);
 
         return reservationRepository.save(reservation);
     }

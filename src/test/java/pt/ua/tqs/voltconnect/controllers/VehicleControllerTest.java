@@ -62,11 +62,12 @@ class VehicleControllerTest {
         when(vehicleService.getAllVehicles()).thenReturn(vehicles);
 
         ResponseEntity<List<VehicleDTO>> response = vehicleController.getAll();
+        List<VehicleDTO> responseBody = response.getBody();
 
         assertTrue(response.getStatusCode().is2xxSuccessful());
-        assertNotNull(response.getBody());
-        assertEquals(1, response.getBody().size());
-        assertEquals(vehicleDTO.getId(), response.getBody().get(0).getId());
+        assertNotNull(responseBody);
+        assertEquals(1, responseBody.size());
+        assertEquals(vehicleDTO.getId(), responseBody.get(0).getId());
         verify(vehicleService, times(1)).getAllVehicles();
     }
 
@@ -76,11 +77,12 @@ class VehicleControllerTest {
         when(vehicleService.getVehiclesByBrand("Test Brand")).thenReturn(vehicles);
 
         ResponseEntity<List<VehicleDTO>> response = vehicleController.getByBrand("Test Brand");
+        List<VehicleDTO> responseBody = response.getBody();
 
         assertTrue(response.getStatusCode().is2xxSuccessful());
-        assertNotNull(response.getBody());
-        assertEquals(1, response.getBody().size());
-        assertEquals(vehicleDTO.getId(), response.getBody().get(0).getId());
+        assertNotNull(responseBody);
+        assertEquals(1, responseBody.size());
+        assertEquals(vehicleDTO.getId(), responseBody.get(0).getId());
         verify(vehicleService, times(1)).getVehiclesByBrand("Test Brand");
     }
 
@@ -89,10 +91,11 @@ class VehicleControllerTest {
         when(vehicleService.getVehicleById("test-id")).thenReturn(Optional.of(vehicleDTO));
 
         ResponseEntity<VehicleDTO> response = vehicleController.getById("test-id");
+        VehicleDTO responseBody = response.getBody();
 
         assertTrue(response.getStatusCode().is2xxSuccessful());
-        assertNotNull(response.getBody());
-        assertEquals(vehicleDTO.getId(), response.getBody().getId());
+        assertNotNull(responseBody);
+        assertEquals(vehicleDTO.getId(), responseBody.getId());
         verify(vehicleService, times(1)).getVehicleById("test-id");
     }
 

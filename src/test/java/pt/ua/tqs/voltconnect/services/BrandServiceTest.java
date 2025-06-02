@@ -121,12 +121,13 @@ class BrandServiceTest {
     void importAllBrands_ForceTrue_ImportsAllBrands() {
         List<BrandDTO> apiResponse = Arrays.asList(brandDTO1, brandDTO2);
         ResponseEntity<List<BrandDTO>> responseEntity = ResponseEntity.ok(apiResponse);
+        ParameterizedTypeReference<List<BrandDTO>> typeRef = new ParameterizedTypeReference<>() {};
         
         when(restTemplate.exchange(
                 eq("http://test.api/brands"),
                 eq(HttpMethod.GET),
                 isNull(),
-                any(ParameterizedTypeReference.class)
+                eq(typeRef)
         )).thenReturn(responseEntity);
         
         when(brandRepository.findById("brand1")).thenReturn(Optional.empty());
@@ -141,6 +142,7 @@ class BrandServiceTest {
     @Test
     void importAllBrands_ForceFalse_ExistingData_DoesNothing() {
         when(brandRepository.count()).thenReturn(1L);
+        ParameterizedTypeReference<List<BrandDTO>> typeRef = new ParameterizedTypeReference<>() {};
         
         brandService.importAllBrands(false);
         
@@ -149,19 +151,20 @@ class BrandServiceTest {
                 anyString(),
                 any(HttpMethod.class),
                 isNull(),
-                any(ParameterizedTypeReference.class)
+                eq(typeRef)
         );
     }
 
     @Test
     void importAllBrands_ApiError_DoesNothing() {
         ResponseEntity<List<BrandDTO>> errorResponse = ResponseEntity.badRequest().build();
+        ParameterizedTypeReference<List<BrandDTO>> typeRef = new ParameterizedTypeReference<>() {};
         
         when(restTemplate.exchange(
                 eq("http://test.api/brands"),
                 eq(HttpMethod.GET),
                 isNull(),
-                any(ParameterizedTypeReference.class)
+                eq(typeRef)
         )).thenReturn(errorResponse);
         
         brandService.importAllBrands(true);

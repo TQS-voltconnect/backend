@@ -67,14 +67,14 @@ class ReservationControllerIntegrationTest {
                                 .thenThrow(new IllegalArgumentException("Invalid data"));
 
                 Reservation invalidReservation = Reservation.builder()
-                                .userId(1L) // Faltando campos obrigatórios, exemplo vehicleId
+                                .userId(1L)
                                 .build();
 
                 mockMvc.perform(post("/api/reservations")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(invalidReservation)))
                                 .andExpect(status().isBadRequest())
-                                .andExpect(content().string("Invalid data"));
+                                .andExpect(content().string("{\"message\":\"Invalid data\"}"));
         }
 
         @Test

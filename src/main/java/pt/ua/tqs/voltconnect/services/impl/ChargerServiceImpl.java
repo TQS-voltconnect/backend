@@ -50,8 +50,6 @@ public class ChargerServiceImpl implements ChargerService {
             }
         }
 
-        // charger.setChargingStation(chargingStation);
-
         return chargerRepository.save(charger);
     }
 

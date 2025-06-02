@@ -17,9 +17,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 @ExtendWith(MockitoExtension.class)
-public class ReservationServiceTest {
+class ReservationServiceTest {
 
     @Mock
     private ReservationRepository reservationRepository;
@@ -199,69 +201,48 @@ public class ReservationServiceTest {
 
     @Test
     void createReservation_ChargerIsMarkedOccupied() {
-        reservation.setChargerId(chargerAC.getId());
-        reservation.setVehicleId(vehicleWithAC.getId());
+        // Setup
+        reservation.setChargerId(chargerDC.getId());
+        reservation.setVehicleId(vehicleWithDC.getId());
+        chargerDC.setChargerStatus(Charger.Status.AVAILABLE); // Explicitly set initial status
 
         when(chargingStationRepository.findById(station.getId())).thenReturn(Optional.of(station));
-        when(vehicleRepository.findById(vehicleWithAC.getId())).thenReturn(Optional.of(vehicleWithAC));
-        when(reservationRepository.findByChargerId(chargerAC.getId())).thenReturn(Collections.emptyList());
+        when(vehicleRepository.findById(vehicleWithDC.getId())).thenReturn(Optional.of(vehicleWithDC));
+        when(reservationRepository.findByChargerId(chargerDC.getId())).thenReturn(Collections.emptyList());
         when(reservationRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
+        // Execute
         reservationService.createReservation(reservation);
 
-        assertEquals(Charger.Status.OCCUPIED, chargerAC.getChargerStatus());
+        // Verify
+        assertEquals(Charger.Status.OCCUPIED, chargerDC.getChargerStatus());
+        verify(reservationRepository).save(any(Reservation.class));
     }
 
-    @Test
-    void createReservation_InvalidDCJson_Throws() {
+    @ParameterizedTest
+    @CsvSource({
+        "'vehicle-invalid-json', 'INVALID_JSON', 'Error parsing DC charger JSON'",
+        "'vehicle-invalid-curve', '{\"charging_curve\": []}', 'Invalid or missing charging_curve data'",
+        "'vehicle-zero-power', '{\"charging_curve\": [{\"percentage\": 0, \"power\": 0}, {\"percentage\": 100, \"power\": 0}]}', 'Invalid average power in charging curve'"
+    })
+    void createReservation_InvalidDCChargerData_Throws(String vehicleId, String dcChargerJson, String expectedMessage) {
+        // Setup
         reservation.setChargerId(chargerDC.getId());
-
+        
         Vehicle vehicle = new Vehicle();
-        vehicle.setId("vehicle-invalid-json");
+        vehicle.setId(vehicleId);
         vehicle.setUsableBatterySize(42.2);
-        vehicle.setDcChargerJson("INVALID_JSON");
-
+        vehicle.setDcChargerJson(dcChargerJson);
+        
         when(chargingStationRepository.findById(station.getId())).thenReturn(Optional.of(station));
         when(vehicleRepository.findById(vehicle.getId())).thenReturn(Optional.of(vehicle));
-
+        
         reservation.setVehicleId(vehicle.getId());
 
-        assertThrows(IllegalArgumentException.class, () -> reservationService.createReservation(reservation));
-    }
-
-    @Test
-    void createReservation_DCChargerInvalidCurve_Throws() {
-        reservation.setChargerId(chargerDC.getId());
-
-        Vehicle vehicle = new Vehicle();
-        vehicle.setId("vehicle-invalid-curve");
-        vehicle.setUsableBatterySize(42.2);
-        vehicle.setDcChargerJson("{\"charging_curve\": []}");
-
-        when(chargingStationRepository.findById(station.getId())).thenReturn(Optional.of(station));
-        when(vehicleRepository.findById(vehicle.getId())).thenReturn(Optional.of(vehicle));
-
-        reservation.setVehicleId(vehicle.getId());
-
-        assertThrows(IllegalArgumentException.class, () -> reservationService.createReservation(reservation));
-    }
-
-    @Test
-    void createReservation_DCChargerAvgPowerZero_Throws() {
-        reservation.setChargerId(chargerDC.getId());
-
-        Vehicle vehicle = new Vehicle();
-        vehicle.setId("vehicle-zero-power");
-        vehicle.setUsableBatterySize(42.2);
-        vehicle.setDcChargerJson(
-                "{\"charging_curve\": [{\"percentage\": 0, \"power\": 0}, {\"percentage\": 100, \"power\": 0}]}");
-
-        when(chargingStationRepository.findById(station.getId())).thenReturn(Optional.of(station));
-        when(vehicleRepository.findById(vehicle.getId())).thenReturn(Optional.of(vehicle));
-
-        reservation.setVehicleId(vehicle.getId());
-
-        assertThrows(IllegalArgumentException.class, () -> reservationService.createReservation(reservation));
+        // Execute & Verify
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, 
+            () -> reservationService.createReservation(reservation));
+        assertEquals(expectedMessage, exception.getMessage());
     }
 
     @Test

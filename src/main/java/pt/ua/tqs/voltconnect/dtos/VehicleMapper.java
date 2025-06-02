@@ -5,6 +5,16 @@ import pt.ua.tqs.voltconnect.models.Vehicle;
 
 public class VehicleMapper {
 
+    private VehicleMapper() {
+        throw new IllegalStateException("Utility class");
+    }
+
+    public static class VehicleMappingException extends RuntimeException {
+        public VehicleMappingException(String message, Throwable cause) {
+            super(message, cause);
+        }
+    }
+
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     public static VehicleDTO toDTO(Vehicle vehicle) {
@@ -34,7 +44,7 @@ public class VehicleMapper {
                 dto.setEnergyConsumption(objectMapper.readValue(vehicle.getEnergyConsumptionJson(), EnergyConsumption.class));
             }
         } catch (Exception e) {
-            throw new RuntimeException("Error converting vehicle to DTO", e);
+            throw new VehicleMappingException("Error converting vehicle to DTO", e);
         }
 
         return dto;

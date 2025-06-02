@@ -56,10 +56,12 @@ public class BrandServiceImpl implements BrandService {
 
     @Override
     public void importAllBrands(boolean force) {
+        if (!force && brandRepository.count() > 0) {
+            return;
+        }
+
         if (force) {
             brandRepository.deleteAll();
-        } else if (brandRepository.count() > 0) {
-            return;
         }
 
         ResponseEntity<List<BrandDTO>> response = restTemplate.exchange(
@@ -69,37 +71,19 @@ public class BrandServiceImpl implements BrandService {
                 new ParameterizedTypeReference<>() {}
         );
 
-        if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) return;
+        if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
+            return;
+        }
 
-        List<BrandDTO> dtos = response.getBody();
-        if (dtos == null) return;
-
-        for (BrandDTO dto : dtos) {
-            Brand existing = brandRepository.findById(dto.getId()).orElse(null);
-
-            if (existing == null) {
-                Brand newBrand = Brand.builder()
-                        .id(dto.getId())
-                        .name(dto.getName())
-                        .modelsFile(dto.getModelsFile())
+        List<BrandDTO> brands = response.getBody();
+        for (BrandDTO brandDTO : brands) {
+            if (brandRepository.findById(brandDTO.getId()).isEmpty()) {
+                Brand brand = Brand.builder()
+                        .id(brandDTO.getId())
+                        .name(brandDTO.getName())
+                        .modelsFile(brandDTO.getModelsFile())
                         .build();
-                brandRepository.save(newBrand);
-            } else {
-                boolean changed = false;
-
-                if (!existing.getName().equals(dto.getName())) {
-                    existing.setName(dto.getName());
-                    changed = true;
-                }
-
-                if (!existing.getModelsFile().equals(dto.getModelsFile())) {
-                    existing.setModelsFile(dto.getModelsFile());
-                    changed = true;
-                }
-
-                if (changed) {
-                    brandRepository.save(existing);
-                }
+                brandRepository.save(brand);
             }
         }
     }

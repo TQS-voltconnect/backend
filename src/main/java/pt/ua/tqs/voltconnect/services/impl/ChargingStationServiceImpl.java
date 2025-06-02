@@ -7,7 +7,6 @@ import pt.ua.tqs.voltconnect.repositories.ChargingStationRepository;
 import pt.ua.tqs.voltconnect.services.ChargingStationService;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class ChargingStationServiceImpl implements ChargingStationService {

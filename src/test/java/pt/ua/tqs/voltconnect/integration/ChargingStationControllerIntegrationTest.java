@@ -5,7 +5,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import pt.ua.tqs.voltconnect.controllers.ChargingStationController;
@@ -29,8 +29,8 @@ class ChargingStationControllerIntegrationTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @MockBean
-    private ChargingStationService stationService;
+    @MockitoBean
+    private ChargingStationService chargingStationService;
 
     private ChargingStation sampleStation;
 
@@ -47,7 +47,7 @@ class ChargingStationControllerIntegrationTest {
 
     @Test
     void createSimpleStation_Success() throws Exception {
-        when(stationService.saveStation(any(ChargingStation.class))).thenReturn(sampleStation);
+        when(chargingStationService.saveStation(any(ChargingStation.class))).thenReturn(sampleStation);
 
         mockMvc.perform(post("/api/stations")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -62,7 +62,7 @@ class ChargingStationControllerIntegrationTest {
 
     @Test
     void getAllStations_ReturnsList() throws Exception {
-        when(stationService.getAllStations()).thenReturn(List.of(sampleStation));
+        when(chargingStationService.getAllStations()).thenReturn(List.of(sampleStation));
 
         mockMvc.perform(get("/api/stations"))
                 .andExpect(status().isOk())
@@ -76,7 +76,7 @@ class ChargingStationControllerIntegrationTest {
 
     @Test
     void getStationById_ExistingId_ReturnsStation() throws Exception {
-        when(stationService.findById(sampleStation.getId())).thenReturn(sampleStation);
+        when(chargingStationService.findById(sampleStation.getId())).thenReturn(sampleStation);
 
         mockMvc.perform(get("/api/stations/" + sampleStation.getId()))
                 .andExpect(status().isOk())
@@ -89,7 +89,7 @@ class ChargingStationControllerIntegrationTest {
 
     @Test
     void getStationById_NotFound_ReturnsNotFound() throws Exception {
-        when(stationService.findById(999L)).thenThrow(new RuntimeException("Station not found"));
+        when(chargingStationService.findById(999L)).thenThrow(new RuntimeException("Station not found"));
 
         mockMvc.perform(get("/api/stations/999"))
                 .andExpect(status().isNotFound());
@@ -108,7 +108,7 @@ class ChargingStationControllerIntegrationTest {
         Long nonExistingId = 999L;
 
         doThrow(new RuntimeException("Station not found"))
-            .when(stationService).deleteStation(nonExistingId);
+            .when(chargingStationService).deleteStation(nonExistingId);
 
         mockMvc.perform(delete("/api/stations/{id}", nonExistingId))
                 .andExpect(status().isNotFound());

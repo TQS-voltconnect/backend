@@ -5,7 +5,6 @@ import org.springframework.stereotype.Service;
 import pt.ua.tqs.voltconnect.models.Charger;
 import pt.ua.tqs.voltconnect.repositories.ChargerRepository;
 import pt.ua.tqs.voltconnect.services.ChargerService;
-import pt.ua.tqs.voltconnect.models.ChargingStation;
 
 import java.util.List;
 import java.util.Optional;

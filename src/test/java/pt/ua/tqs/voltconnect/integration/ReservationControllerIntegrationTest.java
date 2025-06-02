@@ -3,9 +3,11 @@ package pt.ua.tqs.voltconnect.integration;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import pt.ua.tqs.voltconnect.controllers.ReservationController;
@@ -23,6 +25,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(ReservationController.class)
+@ExtendWith(MockitoExtension.class)
 class ReservationControllerIntegrationTest {
 
         @Autowired
@@ -31,7 +34,7 @@ class ReservationControllerIntegrationTest {
         @Autowired
         private ObjectMapper objectMapper;
 
-        @MockBean
+        @Mock
         private ReservationService reservationService;
 
         private Reservation sampleReservation;

@@ -6,10 +6,6 @@ import org.springframework.web.bind.annotation.*;
 import pt.ua.tqs.voltconnect.models.User;
 import pt.ua.tqs.voltconnect.services.UserService;
 import jakarta.validation.Valid;
-import org.springframework.validation.FieldError;
-import org.springframework.web.bind.MethodArgumentNotValidException;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.List;
 
 @RestController
@@ -32,7 +28,7 @@ public class UserController {
     }
 
     @PostMapping
-    public ResponseEntity<?> createUser(@Valid @RequestBody User user) {
+    public ResponseEntity<User> createUser(@Valid @RequestBody User user) {
         User savedUser = userService.saveUser(user);
         return ResponseEntity.ok(savedUser);
     }    

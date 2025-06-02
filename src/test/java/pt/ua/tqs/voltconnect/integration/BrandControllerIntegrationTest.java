@@ -1,12 +1,12 @@
 package pt.ua.tqs.voltconnect.integration;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.client.RestTemplate;
 import pt.ua.tqs.voltconnect.controllers.BrandController;
@@ -15,27 +15,22 @@ import pt.ua.tqs.voltconnect.services.BrandService;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
 
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(BrandController.class)
+@ExtendWith(MockitoExtension.class)
 class BrandControllerIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    @MockBean
+    @Mock
     private BrandService brandService;
 
-    @MockBean
+    @Mock
     private RestTemplate restTemplate;
 
     private BrandDTO brand1;

@@ -16,16 +16,14 @@ import pt.ua.tqs.voltconnect.repositories.BrandRepository;
 import pt.ua.tqs.voltconnect.repositories.VehicleRepository;
 import pt.ua.tqs.voltconnect.services.impl.VehicleServiceImpl;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class VehicleServiceTest {
+class VehicleServiceTest {
 
     @Mock
     private VehicleRepository vehicleRepository;

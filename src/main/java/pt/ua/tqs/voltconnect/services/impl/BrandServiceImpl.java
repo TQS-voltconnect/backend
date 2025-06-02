@@ -76,6 +76,7 @@ public class BrandServiceImpl implements BrandService {
         }
 
         List<BrandDTO> brands = response.getBody();
+        if (brands == null) { return; }
         for (BrandDTO brandDTO : brands) {
             if (brandRepository.findById(brandDTO.getId()).isEmpty()) {
                 Brand brand = Brand.builder()

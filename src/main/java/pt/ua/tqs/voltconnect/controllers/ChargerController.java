@@ -14,11 +14,14 @@ import java.util.List;
 @RequestMapping("/api/chargers")
 public class ChargerController {
 
-    @Autowired
-    private ChargerService chargerService;
+    private final ChargerService chargerService;
+    private final ChargingStationService stationService;
 
     @Autowired
-    private ChargingStationService stationService;
+    public ChargerController(ChargerService chargerService, ChargingStationService stationService) {
+        this.chargerService = chargerService;
+        this.stationService = stationService;
+    }
 
     @GetMapping
     public List<Charger> getAllChargers() {
@@ -45,12 +48,6 @@ public class ChargerController {
         Charger saved = chargerService.saveCharger(charger);
         return ResponseEntity.ok(saved);
     }    
-
-    // @PostMapping
-    // public Charger createCharger(@RequestBody Charger charger, 
-    //                               @RequestParam Long stationId) {
-    //     return chargerService.saveCharger(charger, charger.getChargingStation());
-    // }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteCharger(@PathVariable Long id) {

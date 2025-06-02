@@ -13,7 +13,6 @@ import pt.ua.tqs.voltconnect.repositories.BrandRepository;
 import pt.ua.tqs.voltconnect.services.BrandService;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -29,7 +28,7 @@ public class BrandServiceImpl implements BrandService {
     public List<BrandDTO> getAllBrands() {
         return brandRepository.findAll().stream()
                 .map(this::toDTO)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -43,7 +42,7 @@ public class BrandServiceImpl implements BrandService {
     public List<BrandDTO> getBrandByName(String name) {
         return brandRepository.findByNameIgnoreCase(name).stream()
                 .map(this::toDTO)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     private BrandDTO toDTO(Brand brand) {

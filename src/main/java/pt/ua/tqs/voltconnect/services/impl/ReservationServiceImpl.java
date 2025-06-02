@@ -25,17 +25,40 @@ import java.util.List;
 @Service
 public class ReservationServiceImpl implements ReservationService {
 
-    @Autowired
     private ReservationRepository reservationRepository;
-
-    @Autowired
     private ChargingStationRepository chargingStationRepository;
-
-    @Autowired
     private VehicleRepository vehicleRepository;
 
-    @Override
-    public Reservation createReservation(Reservation reservation) {
+    @Autowired
+    public ReservationServiceImpl(ReservationRepository reservationRepository,
+            ChargingStationRepository chargingStationRepository, VehicleRepository vehicleRepository) {
+        this.reservationRepository = reservationRepository;
+        this.chargingStationRepository = chargingStationRepository;
+        this.vehicleRepository = vehicleRepository;
+    }
+
+    private static class CurvePoint {
+        private int percentage;
+        private double power;
+
+        public int getPercentage() {
+            return percentage;
+        }
+
+        public void setPercentage(int percentage) {
+            this.percentage = percentage;
+        }
+
+        public double getPower() {
+            return power;
+        }
+
+        public void setPower(double power) {
+            this.power = power;
+        }
+    }
+
+    private void validateReservationInput(Reservation reservation) {
         if (reservation.getVehicleId() == null) {
             throw new IllegalArgumentException("vehicleId cannot be null");
         }
@@ -45,31 +68,35 @@ public class ReservationServiceImpl implements ReservationService {
         if (reservation.getChargerId() == null) {
             throw new IllegalArgumentException("chargerId cannot be null");
         }
-
         if (reservation.getStartTime() == null || reservation.getStartTime().before(new Date())) {
             throw new IllegalArgumentException("Start time must be a future date");
         }
+    }
 
-        ChargingStation station = chargingStationRepository.findById(reservation.getChargingStationId())
+    private ChargingStation validateAndGetChargingStation(Long stationId, Long chargerId) {
+        ChargingStation station = chargingStationRepository.findById(stationId)
                 .orElseThrow(() -> new IllegalArgumentException("Charging station not found"));
 
         boolean chargerBelongsToStation = station.getChargers()
                 .stream()
-                .anyMatch(charger -> charger.getId().equals(reservation.getChargerId()));
+                .anyMatch(charger -> charger.getId().equals(chargerId));
 
         if (!chargerBelongsToStation) {
             throw new IllegalArgumentException("Charger does not belong to the specified charging station");
         }
 
-        Charger charger = station.getChargers()
+        return station;
+    }
+
+    private Charger getChargerFromStation(ChargingStation station, Long chargerId) {
+        return station.getChargers()
                 .stream()
-                .filter(c -> c.getId().equals(reservation.getChargerId()))
+                .filter(c -> c.getId().equals(chargerId))
                 .findFirst()
                 .orElseThrow();
+    }
 
-        Vehicle vehicle = vehicleRepository.findById(reservation.getVehicleId())
-                .orElseThrow(() -> new IllegalArgumentException("Vehicle not found"));
-
+    private void validateChargerCompatibility(Charger charger, Vehicle vehicle) {
         boolean acceptsChargerType;
         if (charger.getChargerType().name().startsWith("AC")) {
             acceptsChargerType = vehicle.getAcChargerJson() != null && !vehicle.getAcChargerJson().isEmpty();
@@ -82,65 +109,68 @@ public class ReservationServiceImpl implements ReservationService {
         if (!acceptsChargerType) {
             throw new IllegalArgumentException("Vehicle does not support this charger type");
         }
+    }
 
-        double chargingTimeMinutes;
+    private double calculateChargingTime(Charger charger, Vehicle vehicle) {
         if (charger.getChargerType() == Charger.Type.DC && vehicle.getDcChargerJson() != null) {
-            class CurvePoint {
-                public int percentage;
-                public double power;
-            }
+            return calculateDCChargingTime(vehicle);
+        }
+        return (vehicle.getUsableBatterySize() / charger.getChargingSpeed()) * 60.0;
+    }
 
-            ObjectMapper mapper = new ObjectMapper();
-            JsonNode dcChargerNode;
-            try {
-                dcChargerNode = mapper.readTree(vehicle.getDcChargerJson());
-            } catch (JsonProcessingException e) {
-                throw new IllegalArgumentException("Error parsing DC charger JSON", e);
-            }
-            JsonNode curveNode = dcChargerNode.get("charging_curve");
-            if (curveNode == null || !curveNode.isArray() || curveNode.size() < 2) {
-                throw new IllegalArgumentException("Invalid or missing charging_curve data");
-            }
-
-            List<CurvePoint> curvePoints = new ArrayList<>();
-            for (JsonNode pointNode : curveNode) {
-                CurvePoint p = new CurvePoint();
-                p.percentage = pointNode.get("percentage").asInt();
-                p.power = pointNode.get("power").asDouble();
-                curvePoints.add(p);
-            }
-
-            double totalEnergy = vehicle.getUsableBatterySize();
-
-            chargingTimeMinutes = 0.0;
-            for (int i = 0; i < curvePoints.size() - 1; i++) {
-                CurvePoint start = curvePoints.get(i);
-                CurvePoint end = curvePoints.get(i + 1);
-
-                double percentageDelta = (end.percentage - start.percentage) / 100.0;
-                double energySegment = totalEnergy * percentageDelta;
-
-                double avgPower = (start.power + end.power) / 2.0;
-
-                if (avgPower <= 0) {
-                    throw new IllegalArgumentException("Invalid average power in charging curve");
-                }
-
-                double segmentTime = (energySegment / avgPower) * 60.0;
-                chargingTimeMinutes += segmentTime;
-            }
-
-        } else {
-            chargingTimeMinutes = (vehicle.getUsableBatterySize() / charger.getChargingSpeed()) * 60.0;
+    private double calculateDCChargingTime(Vehicle vehicle) {
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode dcChargerNode;
+        try {
+            dcChargerNode = mapper.readTree(vehicle.getDcChargerJson());
+        } catch (JsonProcessingException e) {
+            throw new IllegalArgumentException("Error parsing DC charger JSON", e);
         }
 
-        long chargingTimeLong = (long) Math.ceil(chargingTimeMinutes);
-        reservation.setChargingTime(chargingTimeLong);
+        JsonNode curveNode = dcChargerNode.get("charging_curve");
+        if (curveNode == null || !curveNode.isArray() || curveNode.size() < 2) {
+            throw new IllegalArgumentException("Invalid or missing charging_curve data");
+        }
 
+        List<CurvePoint> curvePoints = parseCurvePoints(curveNode);
+        return calculateChargingTimeFromCurve(curvePoints, vehicle.getUsableBatterySize());
+    }
+
+    private List<CurvePoint> parseCurvePoints(JsonNode curveNode) {
+        List<CurvePoint> curvePoints = new ArrayList<>();
+        for (JsonNode pointNode : curveNode) {
+            CurvePoint p = new CurvePoint();
+            p.setPercentage(pointNode.get("percentage").asInt());
+            p.setPower(pointNode.get("power").asDouble());
+            curvePoints.add(p);
+        }
+        return curvePoints;
+    }
+
+    private double calculateChargingTimeFromCurve(List<CurvePoint> curvePoints, double totalEnergy) {
+        double chargingTimeMinutes = 0.0;
+        for (int i = 0; i < curvePoints.size() - 1; i++) {
+            CurvePoint start = curvePoints.get(i);
+            CurvePoint end = curvePoints.get(i + 1);
+            double percentageDelta = (end.getPercentage() - start.getPercentage()) / 100.0;
+            double energySegment = totalEnergy * percentageDelta;
+            double avgPower = (start.getPower() + end.getPower()) / 2.0;
+
+            if (avgPower <= 0) {
+                throw new IllegalArgumentException("Invalid average power in charging curve");
+            }
+
+            double segmentTime = (energySegment / avgPower) * 60.0;
+            chargingTimeMinutes += segmentTime;
+        }
+        return chargingTimeMinutes;
+    }
+
+    private void validateNoOverlappingReservations(Reservation reservation, long chargingTimeMinutes) {
         Date start = reservation.getStartTime();
-        Date end = new Date(start.getTime() + chargingTimeLong * 60_000);
-
+        Date end = new Date(start.getTime() + chargingTimeMinutes * 60_000);
         List<Reservation> existingReservations = reservationRepository.findByChargerId(reservation.getChargerId());
+
         for (Reservation r : existingReservations) {
             Date rStart = r.getStartTime();
             Date rEnd = new Date(rStart.getTime() + r.getChargingTime() * 60_000);
@@ -149,6 +179,24 @@ public class ReservationServiceImpl implements ReservationService {
                 throw new IllegalArgumentException("Reservation conflicts with an existing reservation");
             }
         }
+    }
+
+    @Override
+    public Reservation createReservation(Reservation reservation) {
+        validateReservationInput(reservation);
+
+        ChargingStation station = validateAndGetChargingStation(reservation.getChargingStationId(), reservation.getChargerId());
+        Charger charger = getChargerFromStation(station, reservation.getChargerId());
+        Vehicle vehicle = vehicleRepository.findById(reservation.getVehicleId())
+                .orElseThrow(() -> new IllegalArgumentException("Vehicle not found"));
+
+        validateChargerCompatibility(charger, vehicle);
+
+        double chargingTimeMinutes = calculateChargingTime(charger, vehicle);
+        long chargingTimeLong = (long) Math.ceil(chargingTimeMinutes);
+        reservation.setChargingTime(chargingTimeLong);
+
+        validateNoOverlappingReservations(reservation, chargingTimeLong);
 
         double price = vehicle.getUsableBatterySize() * charger.getPricePerKWh();
         price = Math.round(price * 100.0) / 100.0;

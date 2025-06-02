@@ -38,8 +38,24 @@ public class ReservationServiceImpl implements ReservationService {
     }
 
     private static class CurvePoint {
-        public int percentage;
-        public double power;
+        private int percentage;
+        private double power;
+
+        public int getPercentage() {
+            return percentage;
+        }
+
+        public void setPercentage(int percentage) {
+            this.percentage = percentage;
+        }
+
+        public double getPower() {
+            return power;
+        }
+
+        public void setPower(double power) {
+            this.power = power;
+        }
     }
 
     private void validateReservationInput(Reservation reservation) {
@@ -124,8 +140,8 @@ public class ReservationServiceImpl implements ReservationService {
         List<CurvePoint> curvePoints = new ArrayList<>();
         for (JsonNode pointNode : curveNode) {
             CurvePoint p = new CurvePoint();
-            p.percentage = pointNode.get("percentage").asInt();
-            p.power = pointNode.get("power").asDouble();
+            p.setPercentage(pointNode.get("percentage").asInt());
+            p.setPower(pointNode.get("power").asDouble());
             curvePoints.add(p);
         }
         return curvePoints;
@@ -136,9 +152,9 @@ public class ReservationServiceImpl implements ReservationService {
         for (int i = 0; i < curvePoints.size() - 1; i++) {
             CurvePoint start = curvePoints.get(i);
             CurvePoint end = curvePoints.get(i + 1);
-            double percentageDelta = (end.percentage - start.percentage) / 100.0;
+            double percentageDelta = (end.getPercentage() - start.getPercentage()) / 100.0;
             double energySegment = totalEnergy * percentageDelta;
-            double avgPower = (start.power + end.power) / 2.0;
+            double avgPower = (start.getPower() + end.getPower()) / 2.0;
 
             if (avgPower <= 0) {
                 throw new IllegalArgumentException("Invalid average power in charging curve");

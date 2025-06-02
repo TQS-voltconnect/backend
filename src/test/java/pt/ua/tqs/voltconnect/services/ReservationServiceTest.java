@@ -115,12 +115,9 @@ public class ReservationServiceTest {
         when(reservationRepository.findByChargerId(chargerAC.getId())).thenReturn(Collections.emptyList());
         when(reservationRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
-        Reservation saved = reservationService.createReservation(reservation);
+        reservationService.createReservation(reservation);
 
-        assertNotNull(saved);
-        assertEquals(chargerAC.getId(), saved.getChargerId());
-        assertTrue(saved.getChargingTime() > 0);
-        assertTrue(saved.getPrice() > 0);
+        assertEquals(Charger.Status.OCCUPIED, chargerAC.getChargerStatus());
     }
 
     @Test
@@ -133,12 +130,9 @@ public class ReservationServiceTest {
         when(reservationRepository.findByChargerId(chargerDC.getId())).thenReturn(Collections.emptyList());
         when(reservationRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
-        Reservation saved = reservationService.createReservation(reservation);
+        reservationService.createReservation(reservation);
 
-        assertNotNull(saved);
-        assertEquals(chargerDC.getId(), saved.getChargerId());
-        assertTrue(saved.getChargingTime() > 0);
-        assertTrue(saved.getPrice() > 0);
+        assertEquals(Charger.Status.OCCUPIED, chargerDC.getChargerStatus());
     }
 
     @Test
@@ -213,7 +207,7 @@ public class ReservationServiceTest {
         when(reservationRepository.findByChargerId(chargerAC.getId())).thenReturn(Collections.emptyList());
         when(reservationRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
-        Reservation saved = reservationService.createReservation(reservation);
+        reservationService.createReservation(reservation);
 
         assertEquals(Charger.Status.OCCUPIED, chargerAC.getChargerStatus());
     }

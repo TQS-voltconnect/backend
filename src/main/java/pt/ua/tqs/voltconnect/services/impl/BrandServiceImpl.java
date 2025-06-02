@@ -72,6 +72,7 @@ public class BrandServiceImpl implements BrandService {
         if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) return;
 
         List<BrandDTO> dtos = response.getBody();
+        if (dtos == null) return;
 
         for (BrandDTO dto : dtos) {
             Brand existing = brandRepository.findById(dto.getId()).orElse(null);

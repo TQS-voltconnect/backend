@@ -67,8 +67,9 @@ class ChargerControllerTest {
         ResponseEntity<Charger> response = chargerController.getChargerById(1L);
 
         assertTrue(response.getStatusCode().is2xxSuccessful());
-        assertNotNull(response.getBody());
-        assertEquals(charger.getId(), response.getBody().getId());
+        Charger responseBody = response.getBody();
+        assertNotNull(responseBody);
+        assertEquals(charger.getId(), responseBody.getId());
         verify(chargerService, times(1)).getChargerById(1L);
     }
 
@@ -103,8 +104,9 @@ class ChargerControllerTest {
         ResponseEntity<Charger> response = chargerController.createCharger(charger);
 
         assertTrue(response.getStatusCode().is2xxSuccessful());
-        assertNotNull(response.getBody());
-        assertEquals(charger.getId(), response.getBody().getId());
+        Charger responseBody = response.getBody();
+        assertNotNull(responseBody);
+        assertEquals(charger.getId(), responseBody.getId());
         verify(stationService, times(1)).findById(1L);
         verify(chargerService, times(1)).saveCharger(any(Charger.class));
     }

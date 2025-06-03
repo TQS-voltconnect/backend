@@ -1,10 +1,10 @@
 package pt.ua.tqs.voltconnect.services.impl;
-import pt.ua.tqs.voltconnect.services.ChargerService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import pt.ua.tqs.voltconnect.models.Charger;
 import pt.ua.tqs.voltconnect.repositories.ChargerRepository;
+import pt.ua.tqs.voltconnect.services.ChargerService;
 
 import java.util.List;
 import java.util.Optional;
@@ -32,6 +32,24 @@ public class ChargerServiceImpl implements ChargerService {
 
     @Override
     public Charger saveCharger(Charger charger) {
+        // Atribui automaticamente o preço e velocidade de carregamento com base no tipo
+        if (charger.getChargerType() != null) {
+            switch (charger.getChargerType()) {
+                case AC1 -> {
+                    charger.setPricePerKWh(0.15);
+                    charger.setChargingSpeed(3.7);
+                }
+                case AC2 -> {
+                    charger.setPricePerKWh(0.25);
+                    charger.setChargingSpeed(22.0);
+                }
+                case DC -> {
+                    charger.setPricePerKWh(0.45);
+                    charger.setChargingSpeed(50.0);
+                }
+            }
+        }
+
         return chargerRepository.save(charger);
     }
 

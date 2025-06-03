@@ -1,0 +1,5 @@
+POSTGRES_DB=voltconnect
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+BD_URL=localhost
+# DB_URL=db_pg

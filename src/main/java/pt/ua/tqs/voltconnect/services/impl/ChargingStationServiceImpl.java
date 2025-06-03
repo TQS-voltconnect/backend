@@ -7,7 +7,6 @@ import pt.ua.tqs.voltconnect.repositories.ChargingStationRepository;
 import pt.ua.tqs.voltconnect.services.ChargingStationService;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class ChargingStationServiceImpl implements ChargingStationService {
@@ -21,8 +20,9 @@ public class ChargingStationServiceImpl implements ChargingStationService {
     }
 
     @Override
-    public Optional<ChargingStation> getStationById(Long id) {
-        return stationRepository.findById(id);
+    public ChargingStation findById(Long id) {
+        return stationRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Station not found"));
     }
 
     @Override
@@ -35,8 +35,19 @@ public class ChargingStationServiceImpl implements ChargingStationService {
         return stationRepository.save(station);
     }
 
+
     @Override
     public void deleteStation(Long id) {
+        if (!stationRepository.existsById(id)) {
+            throw new ChargingStationNotFoundException(id);
+        }
         stationRepository.deleteById(id);
     }
+
+    private static class ChargingStationNotFoundException extends RuntimeException {
+        public ChargingStationNotFoundException(Long id) {
+            super("Charging Station with ID " + id + " not found.");
+        }
+    }
+
 }

@@ -24,10 +24,15 @@ public class ChargingStationController {
         return ResponseEntity.ok(savedStation);
     }
 
-
     @GetMapping
     public List<ChargingStation> getAllStations() {
         return stationService.getAllStations();
+    }
+
+    @PostMapping("/check-charger-statuses")
+    public ResponseEntity<Void> checkChargerStatuses() {
+        stationService.checkAndUpdateChargerStatuses();
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/{id}")

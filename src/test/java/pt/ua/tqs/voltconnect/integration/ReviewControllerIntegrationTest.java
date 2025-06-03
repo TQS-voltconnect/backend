@@ -110,4 +110,16 @@ class ReviewControllerIntegrationTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(content().string("Review not found"));
     }
+
+    @Test
+    void getReviewsByStationId_ShouldReturnList() throws Exception {
+        when(reviewService.getReviewsByStationId(1L)).thenReturn(List.of(review));
+
+        mockMvc.perform(get("/api/reviews/station/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(10L))
+                .andExpect(jsonPath("$[0].chargingStationId").value(1L))
+                .andExpect(jsonPath("$[0].rating").value(5))
+                .andExpect(jsonPath("$[0].comment").value("Awesome station!"));
+    }
 }

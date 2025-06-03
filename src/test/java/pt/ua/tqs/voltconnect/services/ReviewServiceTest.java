@@ -110,4 +110,18 @@ class ReviewServiceTest {
         assertEquals("Excellent!", result.get(0).getComment());
         assertEquals(3, result.get(1).getRating());
     }
+
+    @Test
+    void deleteReviewById_ExistingId_DeletesSuccessfully() {
+        when(reviewRepository.existsById(1L)).thenReturn(true);
+        reviewService.deleteReviewById(1L);
+        verify(reviewRepository).deleteById(1L);
+    }
+
+    @Test
+    void deleteReviewById_NonExistingId_ThrowsException() {
+        when(reviewRepository.existsById(999L)).thenReturn(false);
+        Exception ex = assertThrows(IllegalArgumentException.class, () -> reviewService.deleteReviewById(999L));
+        assertEquals("Review not found", ex.getMessage());
+    }
 }

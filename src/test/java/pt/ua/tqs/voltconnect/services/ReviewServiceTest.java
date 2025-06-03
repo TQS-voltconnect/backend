@@ -2,9 +2,9 @@ package pt.ua.tqs.voltconnect.services;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.*;
+import org.mockito.junit.jupiter.MockitoExtension;
 import pt.ua.tqs.voltconnect.dtos.ReviewRequestDTO;
 import pt.ua.tqs.voltconnect.models.ChargingStation;
 import pt.ua.tqs.voltconnect.models.Review;
@@ -12,14 +12,13 @@ import pt.ua.tqs.voltconnect.repositories.ChargingStationRepository;
 import pt.ua.tqs.voltconnect.repositories.ReviewRepository;
 import pt.ua.tqs.voltconnect.services.impl.ReviewServiceImpl;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 class ReviewServiceTest {
 
     @Mock
@@ -31,95 +30,84 @@ class ReviewServiceTest {
     @InjectMocks
     private ReviewServiceImpl reviewService;
 
-    private Review review1;
-    private Review review2;
-    private ChargingStation chargingStation;
+    private ReviewRequestDTO validRequest;
+    private ChargingStation station;
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
-        
-        chargingStation = new ChargingStation();
-        chargingStation.setId(1L);
+        validRequest = new ReviewRequestDTO();
+        validRequest.setChargingStationId(1L);
+        validRequest.setRating(4);
+        validRequest.setComment("Very good station.");
 
-        review1 = Review.builder()
+        station = ChargingStation.builder()
                 .id(1L)
-                .chargingStation(chargingStation)
-                .rating(4)
-                .comment("Great station!")
-                .build();
-
-        review2 = Review.builder()
-                .id(2L)
-                .chargingStation(chargingStation)
-                .rating(5)
-                .comment("Excellent service!")
+                .city("City")
+                .location(List.of(40.0f, -8.0f))
+                .operatorId(1L)
+                .chargers(List.of())
                 .build();
     }
 
     @Test
-    void getAllReviews_ShouldReturnAllReviews() {
-        // Arrange
-        List<Review> reviews = Arrays.asList(review1, review2);
-        when(reviewRepository.findAll()).thenReturn(reviews);
+    void createReview_WithValidData_ShouldReturnSavedReview() {
+        Review expectedReview = Review.builder()
+                .chargingStation(station)
+                .rating(4)
+                .comment("Very good station.")
+                .build();
 
-        // Act
+        when(chargingStationRepository.findById(1L)).thenReturn(Optional.of(station));
+        when(reviewRepository.save(any())).thenReturn(expectedReview);
+
+        Review result = reviewService.createReview(validRequest);
+
+        assertNotNull(result);
+        assertEquals(4, result.getRating());
+        assertEquals("Very good station.", result.getComment());
+        assertEquals(1L, result.getChargingStation().getId());
+    }
+
+    @Test
+    void createReview_WithRatingTooLow_ShouldThrowException() {
+        validRequest.setRating(0); // Invalid
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> reviewService.createReview(validRequest));
+        assertEquals("Rating must be between 1 and 5", exception.getMessage());
+    }
+
+    @Test
+    void createReview_WithRatingTooHigh_ShouldThrowException() {
+        validRequest.setRating(6); // Invalid
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> reviewService.createReview(validRequest));
+        assertEquals("Rating must be between 1 and 5", exception.getMessage());
+    }
+
+    @Test
+    void createReview_WithNonexistentStation_ShouldThrowException() {
+        when(chargingStationRepository.findById(1L)).thenReturn(Optional.empty());
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> reviewService.createReview(validRequest));
+        assertEquals("Charging station not found", exception.getMessage());
+    }
+
+    @Test
+    void getAllReviews_ShouldReturnListOfReviews() {
+        List<Review> mockReviews = List.of(
+                Review.builder().rating(5).comment("Excellent!").build(),
+                Review.builder().rating(3).comment("Okay.").build());
+
+        when(reviewRepository.findAll()).thenReturn(mockReviews);
+
         List<Review> result = reviewService.getAllReviews();
 
-        // Assert
-        assertNotNull(result);
         assertEquals(2, result.size());
-        assertEquals(review1, result.get(0));
-        assertEquals(review2, result.get(1));
+        assertEquals("Excellent!", result.get(0).getComment());
+        assertEquals(3, result.get(1).getRating());
     }
-
-    @Test
-    void createReview_ShouldCreateNewReview() {
-        // Arrange
-        ReviewRequestDTO requestDTO = new ReviewRequestDTO();
-        requestDTO.setChargingStationId(chargingStation.getId());
-        requestDTO.setRating(4);
-        requestDTO.setComment("Great station!");
-
-        when(chargingStationRepository.findById(chargingStation.getId())).thenReturn(Optional.of(chargingStation));
-        when(reviewRepository.save(any(Review.class))).thenReturn(review1);
-
-        // Act
-        Review result = reviewService.createReview(requestDTO);
-
-        // Assert
-        assertNotNull(result);
-        assertEquals(review1.getId(), result.getId());
-        assertEquals(review1.getRating(), result.getRating());
-        assertEquals(review1.getComment(), result.getComment());
-        assertEquals(review1.getChargingStation(), result.getChargingStation());
-    }
-
-    @Test
-    void createReview_WithInvalidRating_ShouldThrowException() {
-        // Arrange
-        ReviewRequestDTO requestDTO = new ReviewRequestDTO();
-        requestDTO.setChargingStationId(chargingStation.getId());
-        requestDTO.setRating(6); // Invalid rating
-        requestDTO.setComment("Great station!");
-
-        when(chargingStationRepository.findById(chargingStation.getId())).thenReturn(Optional.of(chargingStation));
-
-        // Act & Assert
-        assertThrows(IllegalArgumentException.class, () -> reviewService.createReview(requestDTO));
-    }
-
-    @Test
-    void createReview_WithNonExistentStation_ShouldThrowException() {
-        // Arrange
-        ReviewRequestDTO requestDTO = new ReviewRequestDTO();
-        requestDTO.setChargingStationId(999L); // Non-existent station
-        requestDTO.setRating(4);
-        requestDTO.setComment("Great station!");
-
-        when(chargingStationRepository.findById(999L)).thenReturn(Optional.empty());
-
-        // Act & Assert
-        assertThrows(IllegalArgumentException.class, () -> reviewService.createReview(requestDTO));
-    }
-} 
+}

@@ -44,4 +44,17 @@ public class ReviewServiceImpl implements ReviewService {
     public List<Review> getAllReviews() {
         return reviewRepository.findAll();
     }
+
+    @Override
+    public void deleteReviewById(Long id) {
+        if (!reviewRepository.existsById(id)) {
+            throw new IllegalArgumentException("Review not found");
+        }
+        reviewRepository.deleteById(id);
+    }
+
+    @Override
+    public List<Review> getReviewsByStationId(Long stationId) {
+        return reviewRepository.findByChargingStationId(stationId);
+    }
 }

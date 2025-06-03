@@ -9,5 +9,7 @@ public interface ReviewService {
 
     List<Review> getAllReviews();
 
-    
+    void deleteReviewById(Long id);
+
+    List<Review> getReviewsByStationId(Long stationId);
 }

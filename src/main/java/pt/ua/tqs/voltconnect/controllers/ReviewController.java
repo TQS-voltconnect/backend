@@ -59,7 +59,7 @@ public class ReviewController {
         List<Review> reviews = reviewService.getReviewsByStationId(stationId);
         List<ReviewResponseDTO> dtos = reviews.stream()
                 .map(r -> new ReviewResponseDTO(r.getId(), r.getChargingStation().getId(), r.getRating(), r.getComment()))
-                .collect(Collectors.toList());
+                .toList();
         return ResponseEntity.ok(dtos);
     }
 

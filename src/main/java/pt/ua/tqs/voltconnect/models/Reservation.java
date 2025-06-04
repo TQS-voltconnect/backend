@@ -29,4 +29,9 @@ public class Reservation {
     private Long chargingTime; 
 
     private Double price;
+
+    private Double originalPrice;
+
+    @Builder.Default
+    private boolean discount = false;
 }

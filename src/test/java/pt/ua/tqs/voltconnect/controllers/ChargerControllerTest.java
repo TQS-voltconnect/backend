@@ -36,7 +36,7 @@ class ChargerControllerTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        
+
         station = new ChargingStation();
         station.setId(1L);
         station.setCity("Test City");
@@ -120,4 +120,51 @@ class ChargerControllerTest {
         assertTrue(response.getStatusCode().is2xxSuccessful());
         verify(chargerService, times(1)).deleteCharger(1L);
     }
-} 
+
+    @Test
+    void updateCharger_ExistingId_ShouldReturnUpdatedCharger() {
+        Long chargerId = 1L;
+        Charger existingCharger = new Charger();
+        existingCharger.setId(chargerId);
+        existingCharger.setChargerType(Charger.Type.AC1);
+
+        Charger updatedCharger = new Charger();
+        updatedCharger.setChargerType(Charger.Type.DC);
+        updatedCharger.setChargerStatus(Charger.Status.AVAILABLE);
+        updatedCharger.setChargingSpeed(50.0);
+        updatedCharger.setPricePerKWh(0.45);
+
+        Charger savedCharger = new Charger();
+        savedCharger.setId(chargerId);
+        savedCharger.setChargerType(Charger.Type.DC);
+        savedCharger.setChargerStatus(Charger.Status.AVAILABLE);
+        savedCharger.setChargingSpeed(50.0);
+        savedCharger.setPricePerKWh(0.45);
+
+        when(chargerService.getChargerById(chargerId)).thenReturn(Optional.of(existingCharger));
+        when(chargerService.saveCharger(existingCharger)).thenReturn(savedCharger);
+
+        ResponseEntity<Charger> response = chargerController.updateCharger(chargerId, updatedCharger);
+
+        assertEquals(200, response.getStatusCode().value());
+        assertEquals(Charger.Type.DC, response.getBody().getChargerType());
+        verify(chargerService, times(1)).getChargerById(chargerId);
+        verify(chargerService, times(1)).saveCharger(existingCharger);
+    }
+
+    @Test
+    void updateCharger_NonExistingId_ShouldReturnNotFound() {
+        Long chargerId = 999L;
+        Charger updatedCharger = new Charger();
+        updatedCharger.setChargerType(Charger.Type.DC);
+
+        when(chargerService.getChargerById(chargerId)).thenReturn(Optional.empty());
+
+        ResponseEntity<Charger> response = chargerController.updateCharger(chargerId, updatedCharger);
+
+        assertEquals(404, response.getStatusCode().value());
+        verify(chargerService, times(1)).getChargerById(chargerId);
+        verify(chargerService, never()).saveCharger(any());
+    }
+
+}

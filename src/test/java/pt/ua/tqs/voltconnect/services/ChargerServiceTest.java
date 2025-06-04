@@ -164,4 +164,33 @@ class ChargerServiceTest {
         verify(chargerRepository).delete(charger);
     }
 
+    @Test
+    void deleteCharger_WithStation_RemovesFromStationAndDeletes() {
+        Long chargerId = 1L;
+
+        ChargingStation stationMock = mock(ChargingStation.class);
+        Charger chargerMock = mock(Charger.class);
+
+        when(chargerMock.getChargingStation()).thenReturn(stationMock);
+        when(chargerRepository.findById(chargerId)).thenReturn(Optional.of(chargerMock));
+
+        chargerService.deleteCharger(chargerId);
+
+        verify(stationMock, times(1)).removeCharger(chargerMock);
+        verify(chargerRepository, times(1)).delete(chargerMock);
+    }
+
+    @Test
+    void deleteCharger_NoStation_DeletesOnly() {
+        Long chargerId = 2L;
+
+        Charger charger = mock(Charger.class);
+        when(charger.getChargingStation()).thenReturn(null);
+        when(chargerRepository.findById(chargerId)).thenReturn(Optional.of(charger));
+
+        chargerService.deleteCharger(chargerId);
+
+        verify(chargerRepository, times(1)).delete(charger);
+    }
+
 }

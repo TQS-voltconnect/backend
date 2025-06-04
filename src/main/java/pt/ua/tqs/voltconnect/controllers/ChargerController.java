@@ -18,18 +18,13 @@ public class ChargerController {
 
     private final ChargerService chargerService;
     private final ChargingStationService stationService;
-    private final ChargerRepository chargerRepository;
-    private final ChargingStationRepository chargingStationRepository;
 
     @Autowired
-    public ChargerController(ChargerService chargerService, ChargingStationService stationService,
-            ChargerRepository chargerRepository, ChargingStationRepository chargingStationRepository) {
+    public ChargerController(ChargerService chargerService, ChargingStationService stationService) {
         this.chargerService = chargerService;
         this.stationService = stationService;
-        this.chargerRepository = chargerRepository;
-        this.chargingStationRepository = chargingStationRepository;
     }
-
+    
     @GetMapping
     public List<Charger> getAllChargers() {
         return chargerService.getAllChargers();

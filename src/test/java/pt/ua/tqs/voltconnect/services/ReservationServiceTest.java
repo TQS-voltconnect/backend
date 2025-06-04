@@ -32,6 +32,9 @@ class ReservationServiceTest {
     @Mock
     private VehicleRepository vehicleRepository;
 
+    @Mock
+    private UserRepository userRepository;
+
     @InjectMocks
     private ReservationServiceImpl reservationService;
 
@@ -42,6 +45,7 @@ class ReservationServiceTest {
     private Vehicle vehicleWithAC;
     private Vehicle vehicleWithDC;
     private Vehicle vehicleWithNoCharger;
+    private User user;
 
     @BeforeEach
     void setUp() {
@@ -52,6 +56,10 @@ class ReservationServiceTest {
                 .chargerId(100L)
                 .startTime(new Date(System.currentTimeMillis() + 3600_000))
                 .build();
+
+        user = new User();
+        user.setId(1L);
+        user.setStationReservationsCount(new HashMap<>());
 
         chargerAC = new Charger();
         chargerAC.setId(100L);
@@ -87,6 +95,8 @@ class ReservationServiceTest {
         vehicleWithNoCharger.setUsableBatterySize(42.2);
         vehicleWithNoCharger.setAcChargerJson(null);
         vehicleWithNoCharger.setDcChargerJson(null);
+
+        when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
     }
 
     @Test
@@ -243,6 +253,26 @@ class ReservationServiceTest {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, 
             () -> reservationService.createReservation(reservation));
         assertEquals(expectedMessage, exception.getMessage());
+    }
+
+    @Test
+    void createReservation_FourthTimeDiscountApplied() {
+        reservation.setChargerId(chargerAC.getId());
+        reservation.setVehicleId(vehicleWithAC.getId());
+        user.getStationReservationsCount().put(station.getId(), 3);
+
+        when(chargingStationRepository.findById(station.getId())).thenReturn(Optional.of(station));
+        when(vehicleRepository.findById(vehicleWithAC.getId())).thenReturn(Optional.of(vehicleWithAC));
+        when(reservationRepository.findByChargerId(chargerAC.getId())).thenReturn(Collections.emptyList());
+        when(reservationRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        Reservation result = reservationService.createReservation(reservation);
+
+        assertTrue(result.isDiscount());
+        double expectedOriginalPrice = vehicleWithAC.getUsableBatterySize() * chargerAC.getPricePerKWh();
+        assertEquals(expectedOriginalPrice, result.getOriginalPrice());
+        double expectedDiscounted = Math.round(expectedOriginalPrice * 0.9 * 100.0) / 100.0;
+        assertEquals(expectedDiscounted, result.getPrice());
     }
 
     @Test

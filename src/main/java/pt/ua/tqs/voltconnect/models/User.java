@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import java.util.Map;
+import java.util.HashMap;
 
 @Entity
 @Table(name = "app_user")
@@ -26,6 +28,13 @@ public class User {
 
     @Enumerated(EnumType.STRING)
     private Role role;
+
+    @ElementCollection
+    @CollectionTable(name = "user_station_count", joinColumns = @JoinColumn(name = "user_id"))
+    @MapKeyColumn(name = "station_id")
+    @Column(name = "reservation_count")
+    @Builder.Default
+    private Map<Long, Integer> stationReservationsCount = new HashMap<>();
 
     public enum Role {
         DRIVER, OPERATOR, TECHNICIAN, ADMIN

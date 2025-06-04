@@ -11,16 +11,19 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import pt.ua.tqs.voltconnect.models.Charger;
 import pt.ua.tqs.voltconnect.models.ChargingStation;
 import pt.ua.tqs.voltconnect.models.Reservation;
+import pt.ua.tqs.voltconnect.models.User;
 import pt.ua.tqs.voltconnect.models.Vehicle;
 import pt.ua.tqs.voltconnect.repositories.ReservationRepository;
 import pt.ua.tqs.voltconnect.services.ReservationService;
 import pt.ua.tqs.voltconnect.repositories.ChargingStationRepository;
 import pt.ua.tqs.voltconnect.repositories.VehicleRepository;
+import pt.ua.tqs.voltconnect.repositories.UserRepository;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Optional;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class ReservationServiceImpl implements ReservationService {
@@ -28,13 +31,18 @@ public class ReservationServiceImpl implements ReservationService {
     private ReservationRepository reservationRepository;
     private ChargingStationRepository chargingStationRepository;
     private VehicleRepository vehicleRepository;
+    private UserRepository userRepository;
+
+    private static final double DISCOUNT_RATE = 0.9;
 
     @Autowired
     public ReservationServiceImpl(ReservationRepository reservationRepository,
-            ChargingStationRepository chargingStationRepository, VehicleRepository vehicleRepository) {
+            ChargingStationRepository chargingStationRepository, VehicleRepository vehicleRepository,
+            UserRepository userRepository) {
         this.reservationRepository = reservationRepository;
         this.chargingStationRepository = chargingStationRepository;
         this.vehicleRepository = vehicleRepository;
+        this.userRepository = userRepository;
     }
 
     private static class CurvePoint {
@@ -59,6 +67,9 @@ public class ReservationServiceImpl implements ReservationService {
     }
 
     private void validateReservationInput(Reservation reservation) {
+        if (reservation.getUserId() == null) {
+            throw new IllegalArgumentException("userId cannot be null");
+        }
         if (reservation.getVehicleId() == null) {
             throw new IllegalArgumentException("vehicleId cannot be null");
         }
@@ -189,6 +200,8 @@ public class ReservationServiceImpl implements ReservationService {
         Charger charger = getChargerFromStation(station, reservation.getChargerId());
         Vehicle vehicle = vehicleRepository.findById(reservation.getVehicleId())
                 .orElseThrow(() -> new IllegalArgumentException("Vehicle not found"));
+        User user = userRepository.findById(reservation.getUserId())
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
         validateChargerCompatibility(charger, vehicle);
 
@@ -199,8 +212,26 @@ public class ReservationServiceImpl implements ReservationService {
         validateNoOverlappingReservations(reservation, chargingTimeLong);
 
         double price = vehicle.getUsableBatterySize() * charger.getPricePerKWh();
+
+        Map<Long, Integer> counts = user.getStationReservationsCount();
+        int previousCount = counts.getOrDefault(reservation.getChargingStationId(), 0);
+        boolean applyDiscount = previousCount >= 3;
+
+        reservation.setOriginalPrice(price);
+
+        if (applyDiscount) {
+            reservation.setDiscount(true);
+            price = price * DISCOUNT_RATE; // apply discount
+        } else {
+            reservation.setDiscount(false);
+        }
+
         price = Math.round(price * 100.0) / 100.0;
         reservation.setPrice(price);
+
+        counts.put(reservation.getChargingStationId(), previousCount + 1);
+        user.setStationReservationsCount(counts);
+        userRepository.save(user);
 
         charger.setChargerStatus(Charger.Status.OCCUPIED);
 

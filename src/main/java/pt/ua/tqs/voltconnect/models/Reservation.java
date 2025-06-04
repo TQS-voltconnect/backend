@@ -26,7 +26,11 @@ public class Reservation {
 
     private Date startTime;
     
-    private Long chargingTime; 
+    private Long chargingTime;
 
     private Double price;
+
+    private Double originalPrice;
+
+    private boolean discount;
 }

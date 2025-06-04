@@ -235,7 +235,6 @@ public class ReservationServiceImpl implements ReservationService {
         user.setStationReservationsCount(counts);
         userRepository.save(user);
 
-        charger.setChargerStatus(Charger.Status.OCCUPIED);
 
         return reservationRepository.save(reservation);
     }

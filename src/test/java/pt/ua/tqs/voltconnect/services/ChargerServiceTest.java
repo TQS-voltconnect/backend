@@ -51,9 +51,9 @@ class ChargerServiceTest {
     @Test
     void getAllChargers_ReturnsList() {
         when(chargerRepository.findAll()).thenReturn(Arrays.asList(charger1, charger2));
-        
+
         List<Charger> result = chargerService.getAllChargers();
-        
+
         assertNotNull(result);
         assertEquals(2, result.size());
         assertEquals(charger1.getId(), result.get(0).getId());
@@ -64,9 +64,9 @@ class ChargerServiceTest {
     @Test
     void getChargerById_ExistingId_ReturnsCharger() {
         when(chargerRepository.findById(1L)).thenReturn(Optional.of(charger1));
-        
+
         Optional<Charger> result = chargerService.getChargerById(1L);
-        
+
         assertTrue(result.isPresent());
         assertEquals(charger1.getId(), result.get().getId());
         verify(chargerRepository, times(1)).findById(1L);
@@ -75,9 +75,9 @@ class ChargerServiceTest {
     @Test
     void getChargerById_NonExistingId_ReturnsEmpty() {
         when(chargerRepository.findById(999L)).thenReturn(Optional.empty());
-        
+
         Optional<Charger> result = chargerService.getChargerById(999L);
-        
+
         assertTrue(result.isEmpty());
         verify(chargerRepository, times(1)).findById(999L);
     }
@@ -85,9 +85,9 @@ class ChargerServiceTest {
     @Test
     void getChargersByStationId_ReturnsList() {
         when(chargerRepository.findByChargingStationId(100L)).thenReturn(Arrays.asList(charger1, charger2));
-        
+
         List<Charger> result = chargerService.getChargersByStationId(100L);
-        
+
         assertNotNull(result);
         assertEquals(2, result.size());
         assertEquals(station, result.get(0).getChargingStation());
@@ -99,11 +99,11 @@ class ChargerServiceTest {
     void saveCharger_AC1Type_SetsCorrectPriceAndSpeed() {
         Charger charger = new Charger();
         charger.setChargerType(Charger.Type.AC1);
-        
+
         when(chargerRepository.save(any(Charger.class))).thenReturn(charger);
-        
+
         Charger result = chargerService.saveCharger(charger);
-        
+
         assertEquals(0.15, result.getPricePerKWh());
         assertEquals(3.7, result.getChargingSpeed());
         verify(chargerRepository, times(1)).save(charger);
@@ -113,11 +113,11 @@ class ChargerServiceTest {
     void saveCharger_AC2Type_SetsCorrectPriceAndSpeed() {
         Charger charger = new Charger();
         charger.setChargerType(Charger.Type.AC2);
-        
+
         when(chargerRepository.save(any(Charger.class))).thenReturn(charger);
-        
+
         Charger result = chargerService.saveCharger(charger);
-        
+
         assertEquals(0.25, result.getPricePerKWh());
         assertEquals(22.0, result.getChargingSpeed());
         verify(chargerRepository, times(1)).save(charger);
@@ -127,11 +127,11 @@ class ChargerServiceTest {
     void saveCharger_DCType_SetsCorrectPriceAndSpeed() {
         Charger charger = new Charger();
         charger.setChargerType(Charger.Type.DC);
-        
+
         when(chargerRepository.save(any(Charger.class))).thenReturn(charger);
-        
+
         Charger result = chargerService.saveCharger(charger);
-        
+
         assertEquals(0.45, result.getPricePerKWh());
         assertEquals(50.0, result.getChargingSpeed());
         verify(chargerRepository, times(1)).save(charger);
@@ -141,11 +141,11 @@ class ChargerServiceTest {
     void saveCharger_NullType_DoesNotSetPriceAndSpeed() {
         Charger charger = new Charger();
         charger.setChargerType(null);
-        
+
         when(chargerRepository.save(any(Charger.class))).thenReturn(charger);
-        
+
         Charger result = chargerService.saveCharger(charger);
-        
+
         assertNull(result.getPricePerKWh());
         assertNull(result.getChargingSpeed());
         verify(chargerRepository, times(1)).save(charger);
@@ -154,9 +154,43 @@ class ChargerServiceTest {
     @Test
     void deleteCharger_DeletesSuccessfully() {
         Long id = 1L;
-        doNothing().when(chargerRepository).deleteById(id);
-        
+        Charger charger = new Charger();
+        charger.setId(id);
+
+        when(chargerRepository.findById(id)).thenReturn(Optional.of(charger));
+        doNothing().when(chargerRepository).delete(charger);
+
         assertDoesNotThrow(() -> chargerService.deleteCharger(id));
-        verify(chargerRepository, times(1)).deleteById(id);
+        verify(chargerRepository).delete(charger);
     }
-} 
+
+    @Test
+    void deleteCharger_WithStation_RemovesFromStationAndDeletes() {
+        Long chargerId = 1L;
+
+        ChargingStation stationMock = mock(ChargingStation.class);
+        Charger chargerMock = mock(Charger.class);
+
+        when(chargerMock.getChargingStation()).thenReturn(stationMock);
+        when(chargerRepository.findById(chargerId)).thenReturn(Optional.of(chargerMock));
+
+        chargerService.deleteCharger(chargerId);
+
+        verify(stationMock, times(1)).removeCharger(chargerMock);
+        verify(chargerRepository, times(1)).delete(chargerMock);
+    }
+
+    @Test
+    void deleteCharger_NoStation_DeletesOnly() {
+        Long chargerId = 2L;
+
+        Charger charger = mock(Charger.class);
+        when(charger.getChargingStation()).thenReturn(null);
+        when(chargerRepository.findById(chargerId)).thenReturn(Optional.of(charger));
+
+        chargerService.deleteCharger(chargerId);
+
+        verify(chargerRepository, times(1)).delete(charger);
+    }
+
+}

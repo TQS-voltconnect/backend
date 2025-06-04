@@ -45,8 +45,6 @@ class ReservationServiceTest {
     private Vehicle vehicleWithAC;
     private Vehicle vehicleWithDC;
     private Vehicle vehicleWithNoCharger;
-    private User user ;
-
 
     @BeforeEach
     void setUp() {
@@ -57,10 +55,6 @@ class ReservationServiceTest {
                 .chargerId(100L)
                 .startTime(new Date(System.currentTimeMillis() + 3600_000))
                 .build();
-            
-        user = new User();
-        user.setId(1L);
-        user.setStationReservationsCount(new HashMap<>());
 
         chargerAC = new Charger();
         chargerAC.setId(100L);
@@ -96,8 +90,6 @@ class ReservationServiceTest {
         vehicleWithNoCharger.setUsableBatterySize(42.2);
         vehicleWithNoCharger.setAcChargerJson(null);
         vehicleWithNoCharger.setDcChargerJson(null);
-
-        when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
     }
 
     @Test
@@ -125,6 +117,7 @@ class ReservationServiceTest {
 
         when(chargingStationRepository.findById(station.getId())).thenReturn(Optional.of(station));
         when(vehicleRepository.findById(vehicleWithAC.getId())).thenReturn(Optional.of(vehicleWithAC));
+        when(userRepository.findById(reservation.getUserId())).thenReturn(Optional.of(new User()));
         when(reservationRepository.findByChargerId(chargerAC.getId())).thenReturn(Collections.emptyList());
         when(reservationRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
@@ -140,6 +133,7 @@ class ReservationServiceTest {
 
         when(chargingStationRepository.findById(station.getId())).thenReturn(Optional.of(station));
         when(vehicleRepository.findById(vehicleWithDC.getId())).thenReturn(Optional.of(vehicleWithDC));
+        when(userRepository.findById(reservation.getUserId())).thenReturn(Optional.of(new User()));
         when(reservationRepository.findByChargerId(chargerDC.getId())).thenReturn(Collections.emptyList());
         when(reservationRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
@@ -187,6 +181,7 @@ class ReservationServiceTest {
 
         when(chargingStationRepository.findById(station.getId())).thenReturn(Optional.of(station));
         when(vehicleRepository.findById(vehicleWithNoCharger.getId())).thenReturn(Optional.of(vehicleWithNoCharger));
+        when(userRepository.findById(reservation.getUserId())).thenReturn(Optional.of(new User()));
 
         assertThrows(IllegalArgumentException.class, () -> reservationService.createReservation(reservation));
     }
@@ -198,6 +193,7 @@ class ReservationServiceTest {
 
         when(chargingStationRepository.findById(station.getId())).thenReturn(Optional.of(station));
         when(vehicleRepository.findById(vehicleWithAC.getId())).thenReturn(Optional.of(vehicleWithAC));
+        when(userRepository.findById(reservation.getUserId())).thenReturn(Optional.of(new User()));
 
         Reservation existingReservation = Reservation.builder()
                 .startTime(new Date(System.currentTimeMillis() + 3000_000))
@@ -212,47 +208,44 @@ class ReservationServiceTest {
 
     @Test
     void createReservation_ChargerIsMarkedOccupied() {
-        // Setup
         reservation.setChargerId(chargerDC.getId());
         reservation.setVehicleId(vehicleWithDC.getId());
-        chargerDC.setChargerStatus(Charger.Status.AVAILABLE); // Explicitly set initial status
+        chargerDC.setChargerStatus(Charger.Status.AVAILABLE);
 
         when(chargingStationRepository.findById(station.getId())).thenReturn(Optional.of(station));
         when(vehicleRepository.findById(vehicleWithDC.getId())).thenReturn(Optional.of(vehicleWithDC));
+        when(userRepository.findById(reservation.getUserId())).thenReturn(Optional.of(new User()));
         when(reservationRepository.findByChargerId(chargerDC.getId())).thenReturn(Collections.emptyList());
         when(reservationRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
-        // Execute
         reservationService.createReservation(reservation);
 
-        // Verify
         assertEquals(Charger.Status.OCCUPIED, chargerDC.getChargerStatus());
         verify(reservationRepository).save(any(Reservation.class));
     }
 
     @ParameterizedTest
     @CsvSource({
-        "'vehicle-invalid-json', 'INVALID_JSON', 'Error parsing DC charger JSON'",
-        "'vehicle-invalid-curve', '{\"charging_curve\": []}', 'Invalid or missing charging_curve data'",
-        "'vehicle-zero-power', '{\"charging_curve\": [{\"percentage\": 0, \"power\": 0}, {\"percentage\": 100, \"power\": 0}]}', 'Invalid average power in charging curve'"
+            "'vehicle-invalid-json', 'INVALID_JSON', 'Error parsing DC charger JSON'",
+            "'vehicle-invalid-curve', '{\"charging_curve\": []}', 'Invalid or missing charging_curve data'",
+            "'vehicle-zero-power', '{\"charging_curve\": [{\"percentage\": 0, \"power\": 0}, {\"percentage\": 100, \"power\": 0}]}', 'Invalid average power in charging curve'"
     })
     void createReservation_InvalidDCChargerData_Throws(String vehicleId, String dcChargerJson, String expectedMessage) {
-        // Setup
         reservation.setChargerId(chargerDC.getId());
-        
+
         Vehicle vehicle = new Vehicle();
         vehicle.setId(vehicleId);
         vehicle.setUsableBatterySize(42.2);
         vehicle.setDcChargerJson(dcChargerJson);
-        
+
         when(chargingStationRepository.findById(station.getId())).thenReturn(Optional.of(station));
         when(vehicleRepository.findById(vehicle.getId())).thenReturn(Optional.of(vehicle));
-        
+        when(userRepository.findById(reservation.getUserId())).thenReturn(Optional.of(new User()));
+
         reservation.setVehicleId(vehicle.getId());
 
-        // Execute & Verify
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, 
-            () -> reservationService.createReservation(reservation));
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> reservationService.createReservation(reservation));
         assertEquals(expectedMessage, exception.getMessage());
     }
 
@@ -283,10 +276,14 @@ class ReservationServiceTest {
     void createReservation_FourthTimeDiscountApplied() {
         reservation.setChargerId(chargerAC.getId());
         reservation.setVehicleId(vehicleWithAC.getId());
+        User user = new User();
+        user.setId(1L);
+        user.setStationReservationsCount(new HashMap<>());
         user.getStationReservationsCount().put(station.getId(), 3);
 
         when(chargingStationRepository.findById(station.getId())).thenReturn(Optional.of(station));
         when(vehicleRepository.findById(vehicleWithAC.getId())).thenReturn(Optional.of(vehicleWithAC));
+        when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
         when(reservationRepository.findByChargerId(chargerAC.getId())).thenReturn(Collections.emptyList());
         when(reservationRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 

@@ -67,9 +67,7 @@ public class ReservationServiceImpl implements ReservationService {
     }
 
     private void validateReservationInput(Reservation reservation) {
-        if (reservation.getUserId() == null) {
-            throw new IllegalArgumentException("userId cannot be null");
-        }
+
         if (reservation.getVehicleId() == null) {
             throw new IllegalArgumentException("vehicleId cannot be null");
         }

@@ -34,6 +34,9 @@ public class ReservationServiceImpl implements ReservationService {
     private ChargingStationRepository chargingStationRepository;
     private VehicleRepository vehicleRepository;
     private UserRepository userRepository;
+    
+    @Autowired
+    private PaymentService paymentService;
 
     private static final double DISCOUNT_RATE = 0.9;
 

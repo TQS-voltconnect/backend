@@ -30,6 +30,11 @@ public class Reservation {
 
     private Double price;
 
+    private Double originalPrice;
+
+    @Builder.Default
+    private boolean discount = false;
+
     private Double energyConsumed;
 
     @Enumerated(EnumType.STRING)

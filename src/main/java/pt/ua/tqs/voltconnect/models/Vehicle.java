@@ -2,6 +2,7 @@ package pt.ua.tqs.voltconnect.models;
 
 import jakarta.persistence.*;
 import lombok.*;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 
 import java.time.LocalDateTime;
 
@@ -16,6 +17,7 @@ public class Vehicle {
     private String id;
     @ManyToOne
     @JoinColumn(name = "brand_id")
+    @JsonBackReference
     private Brand brand;
 
     private String model;

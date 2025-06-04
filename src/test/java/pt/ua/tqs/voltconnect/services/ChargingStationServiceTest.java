@@ -17,7 +17,7 @@ import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-public class ChargingStationServiceTest {
+class ChargingStationServiceTest {
 
     @Mock
     private ChargingStationRepository stationRepository;

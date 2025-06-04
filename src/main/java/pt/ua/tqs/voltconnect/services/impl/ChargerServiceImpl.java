@@ -33,7 +33,6 @@ public class ChargerServiceImpl implements ChargerService {
 
     @Override
     public Charger saveCharger(Charger charger) {
-        // Atribui automaticamente o preço e velocidade de carregamento com base no tipo
         if (charger.getChargerType() != null) {
             switch (charger.getChargerType()) {
                 case AC1 -> {
@@ -51,13 +50,20 @@ public class ChargerServiceImpl implements ChargerService {
             }
         }
 
-        // charger.setChargingStation(chargingStation);
-
         return chargerRepository.save(charger);
     }
 
     @Override
     public void deleteCharger(Long id) {
-        chargerRepository.deleteById(id);
+        Charger charger = chargerRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Charger not found"));
+
+        ChargingStation station = charger.getChargingStation();
+        if (station != null) {
+            station.removeCharger(charger);
+        }
+
+        chargerRepository.delete(charger);
     }
+
 }

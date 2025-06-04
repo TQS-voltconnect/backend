@@ -20,11 +20,16 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class VehicleServiceImpl implements VehicleService {
+
+    public static class VehicleDataSerializationException extends RuntimeException {
+        public VehicleDataSerializationException(String message, Throwable cause) {
+            super(message, cause);
+        }
+    }
 
     private final VehicleRepository vehicleRepository;
     private final BrandRepository brandRepository;
@@ -99,7 +104,7 @@ public class VehicleServiceImpl implements VehicleService {
                 return vehicle;
 
             } catch (JsonProcessingException e) {
-                throw new RuntimeException("Failed to serialize charger or energy data", e);
+                throw new VehicleDataSerializationException("Failed to serialize charger or energy data", e);
             }
         }).toList();
 
@@ -110,14 +115,14 @@ public class VehicleServiceImpl implements VehicleService {
     public List<VehicleDTO> getAllVehicles() {
         return vehicleRepository.findAll().stream()
                 .map(VehicleMapper::toDTO)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
     public List<VehicleDTO> getVehiclesByBrand(String brandName) {
         return vehicleRepository.findByBrand_NameIgnoreCase(brandName).stream()
                 .map(VehicleMapper::toDTO)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override

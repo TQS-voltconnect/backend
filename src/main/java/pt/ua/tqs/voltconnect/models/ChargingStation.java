@@ -12,7 +12,7 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 @AllArgsConstructor
 @Builder
 public class ChargingStation {
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -22,7 +22,6 @@ public class ChargingStation {
     private List<Float> location;
 
     private Long operatorId;
-
 
     @OneToMany(mappedBy = "chargingStation", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @JsonManagedReference
@@ -34,8 +33,8 @@ public class ChargingStation {
     }
 
     public void removeCharger(Charger charger) {
-        chargers.remove(charger);   
-        charger.setChargingStation(null);
+        chargers.remove(charger);
+        charger.setChargingStation(null); // quebra a relação
     }
 
 }

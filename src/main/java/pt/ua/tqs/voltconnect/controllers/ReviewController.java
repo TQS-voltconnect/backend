@@ -27,6 +27,7 @@ public class ReviewController {
         List<Review> reviews = reviewService.getAllReviews();
         List<ReviewResponseDTO> dtos = reviews.stream()
                 .map(r -> new ReviewResponseDTO(
+                        r.getId(),
                         r.getChargingStation().getId(),
                         r.getRating(),
                         r.getComment()))
@@ -38,15 +39,34 @@ public class ReviewController {
     public ResponseEntity<ReviewResponseDTO> createReview(@RequestBody ReviewRequestDTO reviewRequestDTO) {
         Review review = reviewService.createReview(reviewRequestDTO);
         ReviewResponseDTO dto = new ReviewResponseDTO(
+                review.getId(),
                 review.getChargingStation().getId(),
                 review.getRating(),
                 review.getComment()
         );
         return ResponseEntity.ok(dto);
     }
+    
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteReview(@PathVariable Long id) {
+        reviewService.deleteReviewById(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/station/{stationId}")
+    public ResponseEntity<List<ReviewResponseDTO>> getReviewsByStationId(@PathVariable Long stationId) {
+        List<Review> reviews = reviewService.getReviewsByStationId(stationId);
+        List<ReviewResponseDTO> dtos = reviews.stream()
+                .map(r -> new ReviewResponseDTO(r.getId(), r.getChargingStation().getId(), r.getRating(), r.getComment()))
+                .toList();
+        return ResponseEntity.ok(dtos);
+    }
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<String> handleIllegalArgumentException(IllegalArgumentException ex) {
         return ResponseEntity.badRequest().body(ex.getMessage());
     }
+
+
 }

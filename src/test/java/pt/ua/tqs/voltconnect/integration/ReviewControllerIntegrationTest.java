@@ -20,6 +20,7 @@ import static org.mockito.Mockito.when;
 import static org.mockito.ArgumentMatchers.any;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.mockito.Mockito.doThrow;
 
 @WebMvcTest(ReviewController.class)
 class ReviewControllerIntegrationTest {
@@ -93,5 +94,32 @@ class ReviewControllerIntegrationTest {
                 .content(objectMapper.writeValueAsString(requestDTO)))
                 .andExpect(status().isBadRequest())
                 .andExpect(content().string("Invalid rating"));
+    }
+
+    @Test
+    void deleteReview_ExistingId_ShouldReturnNoContent() throws Exception {
+        mockMvc.perform(delete("/api/reviews/10"))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void deleteReview_NonExistingId_ShouldReturnBadRequest() throws Exception {
+        doThrow(new IllegalArgumentException("Review not found")).when(reviewService).deleteReviewById(999L);
+
+        mockMvc.perform(delete("/api/reviews/999"))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("Review not found"));
+    }
+
+    @Test
+    void getReviewsByStationId_ShouldReturnList() throws Exception {
+        when(reviewService.getReviewsByStationId(1L)).thenReturn(List.of(review));
+
+        mockMvc.perform(get("/api/reviews/station/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(10L))
+                .andExpect(jsonPath("$[0].chargingStationId").value(1L))
+                .andExpect(jsonPath("$[0].rating").value(5))
+                .andExpect(jsonPath("$[0].comment").value("Awesome station!"));
     }
 }

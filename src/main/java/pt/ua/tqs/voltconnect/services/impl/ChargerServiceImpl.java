@@ -60,8 +60,10 @@ public class ChargerServiceImpl implements ChargerService {
 
         ChargingStation station = charger.getChargingStation();
         if (station != null) {
-            station.removeCharger(charger); 
+            station.removeCharger(charger);
         }
+
+        chargerRepository.delete(charger);
     }
 
 }

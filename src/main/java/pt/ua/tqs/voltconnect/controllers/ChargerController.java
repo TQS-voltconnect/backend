@@ -58,22 +58,12 @@ public class ChargerController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteCharger(@PathVariable Long id) {
-        Optional<Charger> optionalCharger = chargerRepository.findById(id);
-        if (optionalCharger.isEmpty()) {
+        try {
+            chargerService.deleteCharger(id);
+            return ResponseEntity.noContent().build();
+        } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
         }
-
-        Charger charger = optionalCharger.get();
-        ChargingStation station = charger.getChargingStation();
-
-        if (station != null) {
-            station.removeCharger(charger); // remove da lista e quebra ligação
-            chargingStationRepository.save(station);
-        }
-
-        chargerRepository.delete(charger); // agora sim, pode apagar
-
-        return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/{id}")

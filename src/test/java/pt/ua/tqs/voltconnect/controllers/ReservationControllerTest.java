@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -170,7 +169,7 @@ class ReservationControllerTest {
         @Test
         void processPayment_Success() throws Exception {
                 sampleReservation.setStatus(Reservation.ReservationStatus.PAID);
-                when(reservationService.processPayment(eq(1L), eq("card"))).thenReturn(sampleReservation);
+                when(reservationService.processPayment(1L, "card")).thenReturn(sampleReservation);
 
                 String payload = objectMapper
                                 .writeValueAsString(new pt.ua.tqs.voltconnect.models.PaymentRequest("card"));
@@ -186,7 +185,7 @@ class ReservationControllerTest {
         @Test
         void processPayment_Invalid_BadRequest() throws Exception {
                 doThrow(new IllegalArgumentException("Payment failed"))
-                                .when(reservationService).processPayment(eq(999L), eq("card"));
+                                .when(reservationService).processPayment(999L, "card");
 
                 String payload = objectMapper
                                 .writeValueAsString(new pt.ua.tqs.voltconnect.models.PaymentRequest("card"));

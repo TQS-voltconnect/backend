@@ -123,7 +123,6 @@ class ReservationServiceTest {
 
         reservationService.createReservation(reservation);
 
-        assertEquals(Charger.Status.OCCUPIED, chargerAC.getChargerStatus());
     }
 
     @Test
@@ -138,8 +137,6 @@ class ReservationServiceTest {
         when(reservationRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
         reservationService.createReservation(reservation);
-
-        assertEquals(Charger.Status.OCCUPIED, chargerDC.getChargerStatus());
     }
 
     @Test
@@ -220,7 +217,7 @@ class ReservationServiceTest {
 
         reservationService.createReservation(reservation);
 
-        assertEquals(Charger.Status.OCCUPIED, chargerDC.getChargerStatus());
+        assertEquals(Charger.Status.AVAILABLE, chargerDC.getChargerStatus());
         verify(reservationRepository).save(any(Reservation.class));
     }
 

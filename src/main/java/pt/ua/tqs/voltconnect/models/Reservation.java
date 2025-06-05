@@ -34,4 +34,23 @@ public class Reservation {
 
     @Builder.Default
     private boolean discount = false;
+
+    private Double energyConsumed;
+
+    @Enumerated(EnumType.STRING)
+    private ReservationStatus status = ReservationStatus.SCHEDULED;
+
+    private Date chargingStartTime;
+    private Date chargingEndTime;
+    private String paymentMethod;
+    private Boolean isPaid = false;
+
+    public enum ReservationStatus {
+        SCHEDULED,   
+        CHARGING,     
+        COMPLETED,  
+        PAID,        
+        CANCELLED,    
+        EXPIRED      
+    }
 }

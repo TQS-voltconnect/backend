@@ -1,30 +1,28 @@
-CREATE TABLE IF NOT EXISTS app_user (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    email VARCHAR(255) NOT NULL UNIQUE,
-    role VARCHAR(50) NOT NULL
+-- Inserir apenas utilizadores que ainda não existem (verificado por email)
+INSERT INTO app_user (name, email, role)
+SELECT * FROM (
+    VALUES
+    ('Sofia Ribeiro', 'sofia.admin@voltconnect.com', 'ADMIN'),
+    ('Miguel Ribeiro', 'miguel.driver@voltconnect.com', 'DRIVER'),
+    ('Ana Santos', 'ana.driver@voltconnect.com', 'DRIVER'),
+    ('João Almeida', 'joao.driver@voltconnect.com', 'DRIVER'),
+    ('Beatriz Sousa', 'beatriz.driver@voltconnect.com', 'DRIVER'),
+    ('Tiago Lopes', 'tiago.driver@voltconnect.com', 'DRIVER'),
+    ('Rita Carvalho', 'rita.driver@voltconnect.com', 'DRIVER'),
+    ('Pedro Martins', 'pedro.driver@voltconnect.com', 'DRIVER'),
+    ('Inês Neves', 'ines.driver@voltconnect.com', 'DRIVER'),
+    ('Bruno Monteiro', 'bruno.driver@voltconnect.com', 'DRIVER'),
+    ('Carla Silva', 'carla.operator@voltconnect.com', 'OPERATOR'),
+    ('José Rocha', 'jose.operator@voltconnect.com', 'OPERATOR'),
+    ('Mariana Torres', 'mariana.operator@voltconnect.com', 'OPERATOR'),
+    ('André Cunha', 'andre.operator@voltconnect.com', 'OPERATOR'),
+    ('Bruno Oliveira', 'bruno.tech@voltconnect.com', 'TECHNICIAN'),
+    ('Sónia Fernandes', 'sonia.tech@voltconnect.com', 'TECHNICIAN'),
+    ('Carlos Matos', 'carlos.tech@voltconnect.com', 'TECHNICIAN'),
+    ('Helena Teixeira', 'helena.driver@voltconnect.com', 'DRIVER'),
+    ('Ricardo Faria', 'ricardo.driver@voltconnect.com', 'DRIVER'),
+    ('Luís Pinto', 'luis.driver@voltconnect.com', 'DRIVER')
+) AS vals(name, email, role)
+WHERE NOT EXISTS (
+  SELECT 1 FROM app_user WHERE app_user.email = vals.email
 );
-
-DELETE FROM app_user;
-
-INSERT INTO app_user (name, email, role) VALUES
-('Sofia Ribeiro', 'sofia.admin@voltconnect.com', 'ADMIN'),
-('Miguel Ribeiro', 'miguel.driver@voltconnect.com', 'DRIVER'),
-('Ana Santos', 'ana.driver@voltconnect.com', 'DRIVER'),
-('João Almeida', 'joao.driver@voltconnect.com', 'DRIVER'),
-('Beatriz Sousa', 'beatriz.driver@voltconnect.com', 'DRIVER'),
-('Tiago Lopes', 'tiago.driver@voltconnect.com', 'DRIVER'),
-('Rita Carvalho', 'rita.driver@voltconnect.com', 'DRIVER'),
-('Pedro Martins', 'pedro.driver@voltconnect.com', 'DRIVER'),
-('Inês Neves', 'ines.driver@voltconnect.com', 'DRIVER'),
-('Bruno Monteiro', 'bruno.driver@voltconnect.com', 'DRIVER'),
-('Carla Silva', 'carla.operator@voltconnect.com', 'OPERATOR'),
-('José Rocha', 'jose.operator@voltconnect.com', 'OPERATOR'),
-('Mariana Torres', 'mariana.operator@voltconnect.com', 'OPERATOR'),
-('André Cunha', 'andre.operator@voltconnect.com', 'OPERATOR'),
-('Bruno Oliveira', 'bruno.tech@voltconnect.com', 'TECHNICIAN'),
-('Sónia Fernandes', 'sonia.tech@voltconnect.com', 'TECHNICIAN'),
-('Carlos Matos', 'carlos.tech@voltconnect.com', 'TECHNICIAN'),
-('Helena Teixeira', 'helena.driver@voltconnect.com', 'DRIVER'),
-('Ricardo Faria', 'ricardo.driver@voltconnect.com', 'DRIVER'),
-('Luís Pinto', 'luis.driver@voltconnect.com', 'DRIVER');

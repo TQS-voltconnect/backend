@@ -129,35 +129,6 @@ public class ReservationServiceImpl implements ReservationService {
     }
 
 
-    private List<CurvePoint> parseCurvePoints(JsonNode curveNode) {
-        List<CurvePoint> curvePoints = new ArrayList<>();
-        for (JsonNode pointNode : curveNode) {
-            CurvePoint p = new CurvePoint();
-            p.setPercentage(pointNode.get("percentage").asInt());
-            p.setPower(pointNode.get("power").asDouble());
-            curvePoints.add(p);
-        }
-        return curvePoints;
-    }
-
-    private double calculateChargingTimeFromCurve(List<CurvePoint> curvePoints, double totalEnergy) {
-        double chargingTimeMinutes = 0.0;
-        for (int i = 0; i < curvePoints.size() - 1; i++) {
-            CurvePoint start = curvePoints.get(i);
-            CurvePoint end = curvePoints.get(i + 1);
-            double percentageDelta = (end.getPercentage() - start.getPercentage()) / 100.0;
-            double energySegment = totalEnergy * percentageDelta;
-            double avgPower = (start.getPower() + end.getPower()) / 2.0;
-
-            if (avgPower <= 0) {
-                throw new IllegalArgumentException("Invalid average power in charging curve");
-            }
-
-            double segmentTime = (energySegment / avgPower) * 60.0;
-            chargingTimeMinutes += segmentTime;
-        }
-        return chargingTimeMinutes;
-    }
 
     private void validateNoOverlappingReservations(Reservation reservation, long chargingTimeMinutes) {
         Date start = reservation.getStartTime();

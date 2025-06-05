@@ -356,7 +356,7 @@ public class ReservationServiceImpl implements ReservationService {
         );
 
         if (!result.isSuccess()) {
-            throw new IllegalArgumentException("Payment failed: " + result.getMessage());
+            throw new IllegalArgumentException("Payment failed: " + result.getErrorMessage());
         }
 
         reservation.setPaymentMethod(paymentMethod);

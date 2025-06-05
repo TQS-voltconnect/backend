@@ -6,7 +6,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 @SpringBootTest
 @ActiveProfiles("test") // Use the 'test' profile for testing purposes
-class VoltConnectApplicationTests {
+class VoltconnectBackendApplicationTests {
 
     @Test
     void contextLoads() {

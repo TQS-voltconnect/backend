@@ -9,6 +9,7 @@ import static org.mockito.Mockito.*;
 import pt.ua.tqs.voltconnect.models.*;
 import pt.ua.tqs.voltconnect.repositories.*;
 import pt.ua.tqs.voltconnect.services.impl.ReservationServiceImpl;
+import pt.ua.tqs.voltconnect.services.PaymentService;
 
 import java.util.*;
 
@@ -37,6 +38,9 @@ class ReservationServiceTest {
 
     @InjectMocks
     private ReservationServiceImpl reservationService;
+
+    @Mock
+    private PaymentService paymentService;
 
     private Reservation reservation;
     private ChargingStation station;
@@ -292,4 +296,58 @@ class ReservationServiceTest {
         double expectedDiscounted = Math.round(expectedOriginalPrice * 0.9 * 100.0) / 100.0;
         assertEquals(expectedDiscounted, result.getPrice());
     }
+
+    @Test
+    void cancelReservation_Scheduled_Success() {
+        reservation.setStatus(Reservation.ReservationStatus.SCHEDULED);
+        when(reservationRepository.findById(1L)).thenReturn(Optional.of(reservation));
+        when(chargingStationRepository.findById(1L)).thenReturn(Optional.of(station));
+        when(reservationRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        reservationService.cancelReservation(1L);
+
+        assertEquals(Reservation.ReservationStatus.CANCELLED, reservation.getStatus());
+    }
+
+    @Test
+    void cancelReservation_NonScheduled_Throws() {
+        reservation.setStatus(Reservation.ReservationStatus.PAID);
+        when(reservationRepository.findById(1L)).thenReturn(Optional.of(reservation));
+
+        assertThrows(IllegalArgumentException.class, () -> reservationService.cancelReservation(1L));
+    }
+
+    @Test
+    void startCharging_Valid_Success() {
+        reservation.setStatus(Reservation.ReservationStatus.SCHEDULED);
+        when(reservationRepository.findById(1L)).thenReturn(Optional.of(reservation));
+        when(chargingStationRepository.findById(1L)).thenReturn(Optional.of(station));
+        when(reservationRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        Reservation result = reservationService.startCharging(1L);
+        assertEquals(Reservation.ReservationStatus.CHARGING, result.getStatus());
+    }
+
+    @Test
+    void stopCharging_Valid_Success() {
+        reservation.setStatus(Reservation.ReservationStatus.CHARGING);
+        reservation.setPrice(10.0);
+        when(reservationRepository.findById(1L)).thenReturn(Optional.of(reservation));
+        when(chargingStationRepository.findById(1L)).thenReturn(Optional.of(station));
+        when(reservationRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        Reservation result = reservationService.stopCharging(1L);
+        assertEquals(Reservation.ReservationStatus.COMPLETED, result.getStatus());
+        assertNotNull(result.getChargingEndTime());
+    }
+
+    @Test
+    void processPayment_AlreadyPaid_Throws() {
+        reservation.setStatus(Reservation.ReservationStatus.COMPLETED);
+        reservation.setIsPaid(true);
+        when(reservationRepository.findById(1L)).thenReturn(Optional.of(reservation));
+
+        assertThrows(IllegalArgumentException.class, () -> reservationService.processPayment(1L, "card"));
+    }
+
 }

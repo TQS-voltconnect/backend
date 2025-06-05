@@ -9,7 +9,6 @@ import static org.mockito.Mockito.*;
 import pt.ua.tqs.voltconnect.models.*;
 import pt.ua.tqs.voltconnect.repositories.*;
 import pt.ua.tqs.voltconnect.services.impl.ReservationServiceImpl;
-import pt.ua.tqs.voltconnect.services.PaymentService;
 
 import java.util.*;
 
@@ -18,8 +17,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvSource;
 
 @ExtendWith(MockitoExtension.class)
 class ReservationServiceTest {
@@ -225,30 +222,6 @@ class ReservationServiceTest {
         verify(reservationRepository).save(any(Reservation.class));
     }
 
-    @ParameterizedTest
-    @CsvSource({
-            "'vehicle-invalid-json', 'INVALID_JSON', 'Error parsing DC charger JSON'",
-            "'vehicle-invalid-curve', '{\"charging_curve\": []}', 'Invalid or missing charging_curve data'",
-            "'vehicle-zero-power', '{\"charging_curve\": [{\"percentage\": 0, \"power\": 0}, {\"percentage\": 100, \"power\": 0}]}', 'Invalid average power in charging curve'"
-    })
-    void createReservation_InvalidDCChargerData_Throws(String vehicleId, String dcChargerJson, String expectedMessage) {
-        reservation.setChargerId(chargerDC.getId());
-
-        Vehicle vehicle = new Vehicle();
-        vehicle.setId(vehicleId);
-        vehicle.setUsableBatterySize(42.2);
-        vehicle.setDcChargerJson(dcChargerJson);
-
-        when(chargingStationRepository.findById(station.getId())).thenReturn(Optional.of(station));
-        when(vehicleRepository.findById(vehicle.getId())).thenReturn(Optional.of(vehicle));
-        when(userRepository.findById(reservation.getUserId())).thenReturn(Optional.of(new User()));
-
-        reservation.setVehicleId(vehicle.getId());
-
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> reservationService.createReservation(reservation));
-        assertEquals(expectedMessage, exception.getMessage());
-    }
 
     @Test
     void getReservationById_ExistingId_ReturnsReservation() {

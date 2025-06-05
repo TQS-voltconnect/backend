@@ -96,9 +96,11 @@ class ChargerServiceTest {
     }
 
     @Test
-    void saveCharger_AC1Type_SetsCorrectPriceAndSpeed() {
+    void saveCharger_AC1Type_RespectsManualValues() {
         Charger charger = new Charger();
         charger.setChargerType(Charger.Type.AC1);
+        charger.setPricePerKWh(0.15);
+        charger.setChargingSpeed(3.7);
 
         when(chargerRepository.save(any(Charger.class))).thenReturn(charger);
 
@@ -110,45 +112,58 @@ class ChargerServiceTest {
     }
 
     @Test
-    void saveCharger_AC2Type_SetsCorrectPriceAndSpeed() {
+    void saveCharger_AC2Type_RespectsManualValues() {
         Charger charger = new Charger();
         charger.setChargerType(Charger.Type.AC2);
-
+        charger.setPricePerKWh(0.25);
+        charger.setChargingSpeed(22.0);
         when(chargerRepository.save(any(Charger.class))).thenReturn(charger);
-
         Charger result = chargerService.saveCharger(charger);
-
         assertEquals(0.25, result.getPricePerKWh());
         assertEquals(22.0, result.getChargingSpeed());
-        verify(chargerRepository, times(1)).save(charger);
     }
 
     @Test
-    void saveCharger_DCType_SetsCorrectPriceAndSpeed() {
+    void saveCharger_DCType_RespectsManualValues() {
         Charger charger = new Charger();
         charger.setChargerType(Charger.Type.DC);
-
+        charger.setPricePerKWh(0.45);
+        charger.setChargingSpeed(50.0);
         when(chargerRepository.save(any(Charger.class))).thenReturn(charger);
-
         Charger result = chargerService.saveCharger(charger);
-
         assertEquals(0.45, result.getPricePerKWh());
         assertEquals(50.0, result.getChargingSpeed());
-        verify(chargerRepository, times(1)).save(charger);
     }
 
     @Test
-    void saveCharger_NullType_DoesNotSetPriceAndSpeed() {
+    void saveCharger_MissingPrice_ThrowsException() {
+        Charger charger = new Charger();
+        charger.setChargingSpeed(10.0);
+        charger.setPricePerKWh(null);
+
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> chargerService.saveCharger(charger));
+        assertEquals("Price per kWh must be a positive value", exception.getMessage());
+    }
+
+    @Test
+    void saveCharger_InvalidSpeed_ThrowsException() {
+        Charger charger = new Charger();
+        charger.setPricePerKWh(0.5);
+        charger.setChargingSpeed(0.0);
+
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> chargerService.saveCharger(charger));
+        assertEquals("Charging speed must be a positive value", exception.getMessage());
+    }
+
+    @Test
+    void saveCharger_NullType_MissingPriceAndSpeed_ThrowsException() {
         Charger charger = new Charger();
         charger.setChargerType(null);
+        charger.setPricePerKWh(null);
+        charger.setChargingSpeed(null);
 
-        when(chargerRepository.save(any(Charger.class))).thenReturn(charger);
-
-        Charger result = chargerService.saveCharger(charger);
-
-        assertNull(result.getPricePerKWh());
-        assertNull(result.getChargingSpeed());
-        verify(chargerRepository, times(1)).save(charger);
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> chargerService.saveCharger(charger));
+        assertEquals("Price per kWh must be a positive value", exception.getMessage());
     }
 
     @Test

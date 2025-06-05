@@ -14,6 +14,7 @@ import org.springframework.web.client.RestTemplate;
 import pt.ua.tqs.voltconnect.dtos.BrandDTO;
 import pt.ua.tqs.voltconnect.models.Brand;
 import pt.ua.tqs.voltconnect.repositories.BrandRepository;
+import pt.ua.tqs.voltconnect.repositories.VehicleRepository;
 import pt.ua.tqs.voltconnect.services.impl.BrandServiceImpl;
 
 import java.util.Arrays;
@@ -30,6 +31,9 @@ class BrandServiceTest {
 
     @Mock
     private BrandRepository brandRepository;
+
+    @Mock
+    private VehicleRepository vehicleRepository;
 
     @Mock
     private RestTemplate restTemplate;
@@ -135,6 +139,7 @@ class BrandServiceTest {
         
         brandService.importAllBrands(true);
         
+        verify(vehicleRepository, times(1)).deleteAll();
         verify(brandRepository, times(1)).deleteAll();
         verify(brandRepository, times(2)).save(any(Brand.class));
     }
@@ -169,7 +174,8 @@ class BrandServiceTest {
         
         brandService.importAllBrands(true);
         
+        verify(vehicleRepository, times(1)).deleteAll();
         verify(brandRepository, times(1)).deleteAll();
         verify(brandRepository, never()).save(any(Brand.class));
     }
-} 
+}

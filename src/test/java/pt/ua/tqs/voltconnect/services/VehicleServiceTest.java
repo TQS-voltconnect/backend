@@ -1,5 +1,6 @@
 package pt.ua.tqs.voltconnect.services;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,6 +16,7 @@ import pt.ua.tqs.voltconnect.models.Vehicle;
 import pt.ua.tqs.voltconnect.repositories.BrandRepository;
 import pt.ua.tqs.voltconnect.repositories.VehicleRepository;
 import pt.ua.tqs.voltconnect.services.impl.VehicleServiceImpl;
+import pt.ua.tqs.voltconnect.services.impl.VehicleServiceImpl.VehicleDataSerializationException;
 
 import java.util.List;
 import java.util.Optional;
@@ -37,16 +39,17 @@ class VehicleServiceTest {
     @Mock
     private RestTemplate restTemplate;
 
+    @Mock
+    private ObjectMapper objectMapper;
+
     @InjectMocks
     private VehicleServiceImpl vehicleService;
 
-    private ObjectMapper objectMapper;
     private VehicleDTO vehicleDTO;
     private Brand brand;
 
     @BeforeEach
     void setUp() {
-        objectMapper = new ObjectMapper();
         vehicleService = new VehicleServiceImpl(vehicleRepository, brandRepository, brandService, restTemplate, objectMapper);
 
         vehicleDTO = new VehicleDTO();
@@ -168,4 +171,26 @@ class VehicleServiceTest {
         assertTrue(result.isEmpty());
         verify(vehicleRepository, times(1)).findById("non-existent");
     }
-} 
+
+    @Test
+    void importVehiclesFromBrand_ApiReturnsError_ShouldNotSave() {
+        when(restTemplate.getForEntity(anyString(), eq(VehicleDTO[].class)))
+            .thenReturn(ResponseEntity.status(500).build());
+
+        vehicleService.importVehiclesFromBrand("test-brand");
+
+        verify(vehicleRepository, never()).saveAll(anyList());
+    }
+
+    @Test
+    void importVehiclesFromBrand_InvalidJson_ShouldThrow() throws JsonProcessingException {
+        when(restTemplate.getForEntity(anyString(), eq(VehicleDTO[].class)))
+            .thenReturn(ResponseEntity.ok(new VehicleDTO[]{vehicleDTO}));
+        when(brandRepository.findById(anyString())).thenReturn(Optional.of(brand));
+        doThrow(new JsonProcessingException("Invalid JSON") {}).when(objectMapper).writeValueAsString(any());
+
+        assertThrows(VehicleDataSerializationException.class, () -> {
+            vehicleService.importVehiclesFromBrand("test-brand");
+        });
+    }
+}

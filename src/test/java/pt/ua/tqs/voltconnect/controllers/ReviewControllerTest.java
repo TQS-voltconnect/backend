@@ -1,4 +1,4 @@
-package pt.ua.tqs.voltconnect.integration;
+package pt.ua.tqs.voltconnect.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -8,7 +8,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import pt.ua.tqs.voltconnect.controllers.ReviewController;
 import pt.ua.tqs.voltconnect.dtos.ReviewRequestDTO;
 import pt.ua.tqs.voltconnect.models.ChargingStation;
 import pt.ua.tqs.voltconnect.models.Review;
@@ -23,7 +22,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.mockito.Mockito.doThrow;
 
 @WebMvcTest(ReviewController.class)
-class ReviewControllerIntegrationTest {
+class ReviewControllerTest {
 
     @Autowired
     private MockMvc mockMvc;

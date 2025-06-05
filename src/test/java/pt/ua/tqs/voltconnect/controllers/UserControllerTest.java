@@ -1,4 +1,4 @@
-package pt.ua.tqs.voltconnect.integration;
+package pt.ua.tqs.voltconnect.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -8,7 +8,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import pt.ua.tqs.voltconnect.controllers.UserController;
 import pt.ua.tqs.voltconnect.models.User;
 import pt.ua.tqs.voltconnect.services.UserService;
 
@@ -21,7 +20,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(UserController.class)
-class UserControllerIntegrationTest {
+class UserControllerTest {
 
     @Autowired
     private MockMvc mockMvc;

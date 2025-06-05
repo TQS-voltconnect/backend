@@ -10,6 +10,7 @@ import org.springframework.web.client.RestTemplate;
 import pt.ua.tqs.voltconnect.dtos.BrandDTO;
 import pt.ua.tqs.voltconnect.models.Brand;
 import pt.ua.tqs.voltconnect.repositories.BrandRepository;
+import pt.ua.tqs.voltconnect.repositories.VehicleRepository;
 import pt.ua.tqs.voltconnect.services.BrandService;
 
 import java.util.List;
@@ -19,6 +20,7 @@ import java.util.List;
 public class BrandServiceImpl implements BrandService {
 
     private final BrandRepository brandRepository;
+    private final VehicleRepository vehicleRepository;
     private final RestTemplate restTemplate;
 
     @Value("${external.api.brands-url}")
@@ -60,6 +62,7 @@ public class BrandServiceImpl implements BrandService {
         }
 
         if (force) {
+            vehicleRepository.deleteAll();
             brandRepository.deleteAll();
         }
 

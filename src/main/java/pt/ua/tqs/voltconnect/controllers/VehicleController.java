@@ -28,7 +28,11 @@ public class VehicleController {
 
     @GetMapping("/brand/{name}")
     public ResponseEntity<List<VehicleDTO>> getByBrand(@PathVariable String name) {
-        return ResponseEntity.ok(vehicleService.getVehiclesByBrand(name));
+        List<VehicleDTO> vehicles = vehicleService.getVehiclesByBrand(name);
+        if (vehicles.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(vehicles);
     }
 
     @GetMapping("/{id}")

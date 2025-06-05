@@ -7,10 +7,7 @@ import pt.ua.tqs.voltconnect.models.Charger;
 import pt.ua.tqs.voltconnect.models.ChargingStation;
 import pt.ua.tqs.voltconnect.services.ChargerService;
 import pt.ua.tqs.voltconnect.services.ChargingStationService;
-import pt.ua.tqs.voltconnect.repositories.ChargerRepository;
-import pt.ua.tqs.voltconnect.repositories.ChargingStationRepository;
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/chargers")

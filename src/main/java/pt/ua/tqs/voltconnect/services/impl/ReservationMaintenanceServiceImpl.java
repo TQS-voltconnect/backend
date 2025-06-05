@@ -31,7 +31,7 @@ public class ReservationMaintenanceServiceImpl implements ReservationMaintenance
     }
 
     @Override
-    @Scheduled(fixedRate = 30 * 1000)
+    @Scheduled(fixedRate = 20 * 1000)
     @Transactional
     public void maintainReservationAndChargerStatus() {
         logger.info("Running scheduled maintenance at {}", new Date());
@@ -45,36 +45,33 @@ public class ReservationMaintenanceServiceImpl implements ReservationMaintenance
             Date end = new Date(start.getTime() + chargingTime * 60000);
 
             Charger charger = chargerRepository.findById(reservation.getChargerId()).orElse(null);
-            if (charger == null) {
-                logger.warn("Charger with ID {} not found for reservation {}", reservation.getChargerId(),
-                        reservation.getId());
-                continue;
-            }
 
-            if (reservation.getStatus() == ReservationStatus.CHARGING && end.before(now)) {
-                reservation.setStatus(ReservationStatus.COMPLETED);
-                reservationRepository.save(reservation);
-
-                charger.setChargerStatus(Charger.Status.AVAILABLE);
-                chargerRepository.save(charger);
-
-                logger.info("Completed reservation ID {} (ended at {})", reservation.getId(), end);
-            } else if (reservation.getStatus() == ReservationStatus.SCHEDULED && start.before(now) && end.after(now)) {
-                charger.setChargerStatus(Charger.Status.OCCUPIED);
-                reservation.setStatus(ReservationStatus.CHARGING);
-                reservationRepository.save(reservation);
-                chargerRepository.save(charger);
-
-                logger.info("Reservation ID {} is now CHARGING. Charger ID {} set to OCCUPIED", reservation.getId(),
-                        charger.getId());
-            } else if (reservation.getStatus() == ReservationStatus.SCHEDULED && end.before(now)) {
+            if (reservation.getStatus() == ReservationStatus.SCHEDULED && end.before(now)) {
                 reservation.setStatus(ReservationStatus.EXPIRED);
                 reservationRepository.save(reservation);
-
-                charger.setChargerStatus(Charger.Status.AVAILABLE);
-                chargerRepository.save(charger);
-
+                if (charger != null) {
+                    charger.setChargerStatus(Charger.Status.AVAILABLE);
+                    chargerRepository.save(charger);
+                }
                 logger.info("Expired reservation ID {} (ended at {})", reservation.getId(), end);
+            } else if (reservation.getStatus() == ReservationStatus.CHARGING && end.before(now)) {
+                reservation.setStatus(ReservationStatus.COMPLETED);
+                reservationRepository.save(reservation);
+                if (charger != null) {
+                    charger.setChargerStatus(Charger.Status.AVAILABLE);
+                    chargerRepository.save(charger);
+                }
+                logger.info("Completed reservation ID {} (ended at {})", reservation.getId(), end);
+            } else if (reservation.getStatus() == ReservationStatus.SCHEDULED
+                    && start.before(now) && end.after(now)) {
+                if (charger != null) {
+                    charger.setChargerStatus(Charger.Status.OCCUPIED);
+                    chargerRepository.save(charger);
+                }
+                reservation.setStatus(ReservationStatus.CHARGING);
+                reservationRepository.save(reservation);
+                logger.info("Reservation ID {} is now CHARGING. Charger ID {} set to OCCUPIED", reservation.getId(),
+                        reservation.getChargerId());
             }
         }
 

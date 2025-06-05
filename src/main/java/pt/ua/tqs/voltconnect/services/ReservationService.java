@@ -10,4 +10,9 @@ public interface ReservationService {
 
     Optional<Reservation> getReservationById(Long id);
     Iterable<Reservation> getAllReservations();
+    void cancelReservation(Long id) throws IllegalArgumentException;
+    
+    Reservation startCharging(Long id) throws IllegalArgumentException;
+    Reservation stopCharging(Long id) throws IllegalArgumentException;
+    Reservation processPayment(Long id, String paymentMethod) throws IllegalArgumentException;
 }

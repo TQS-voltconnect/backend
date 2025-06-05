@@ -13,10 +13,12 @@ import pt.ua.tqs.voltconnect.models.ChargingStation;
 import pt.ua.tqs.voltconnect.models.Reservation;
 import pt.ua.tqs.voltconnect.models.User;
 import pt.ua.tqs.voltconnect.models.Vehicle;
+import pt.ua.tqs.voltconnect.models.PaymentResult;
 import pt.ua.tqs.voltconnect.repositories.ReservationRepository;
 import pt.ua.tqs.voltconnect.services.ReservationService;
 import pt.ua.tqs.voltconnect.repositories.ChargingStationRepository;
 import pt.ua.tqs.voltconnect.repositories.VehicleRepository;
+import pt.ua.tqs.voltconnect.services.PaymentService;
 import pt.ua.tqs.voltconnect.repositories.UserRepository;
 
 import java.util.ArrayList;
@@ -32,6 +34,9 @@ public class ReservationServiceImpl implements ReservationService {
     private ChargingStationRepository chargingStationRepository;
     private VehicleRepository vehicleRepository;
     private UserRepository userRepository;
+    
+    @Autowired
+    private PaymentService paymentService;
 
     private static final double DISCOUNT_RATE = 0.9;
 
@@ -230,7 +235,6 @@ public class ReservationServiceImpl implements ReservationService {
         user.setStationReservationsCount(counts);
         userRepository.save(user);
 
-        charger.setChargerStatus(Charger.Status.OCCUPIED);
 
         return reservationRepository.save(reservation);
     }
@@ -243,5 +247,122 @@ public class ReservationServiceImpl implements ReservationService {
     @Override
     public Iterable<Reservation> getAllReservations() {
         return reservationRepository.findAll();
+    }
+
+    @Override
+    public void cancelReservation(Long id) throws IllegalArgumentException {
+        Reservation reservation = reservationRepository.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("Reservation not found"));
+
+        if (reservation.getStatus() != Reservation.ReservationStatus.SCHEDULED) {
+            throw new IllegalArgumentException("Can only cancel scheduled reservations");
+        }
+
+        
+        ChargingStation station = chargingStationRepository.findById(reservation.getChargingStationId())
+            .orElseThrow(() -> new IllegalArgumentException("Charging station not found"));
+
+        Charger charger = station.getChargers()
+            .stream()
+            .filter(c -> c.getId().equals(reservation.getChargerId()))
+            .findFirst()
+            .orElseThrow(() -> new IllegalArgumentException("Charger not found"));
+
+        
+        charger.setChargerStatus(Charger.Status.AVAILABLE);
+        chargingStationRepository.save(station);
+
+        
+        reservation.setStatus(Reservation.ReservationStatus.CANCELLED);
+        reservationRepository.save(reservation);
+    }
+
+    @Override
+    public Reservation startCharging(Long id) throws IllegalArgumentException {
+        Reservation reservation = reservationRepository.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("Reservation not found"));
+
+        if (reservation.getStatus() != Reservation.ReservationStatus.SCHEDULED) {
+            throw new IllegalArgumentException("Can only start charging for scheduled reservations");
+        }
+
+        Date now = new Date();
+        //if (now.before(reservation.getStartTime())) {
+        //    throw new IllegalArgumentException("Cannot start charging before scheduled time");
+        //}
+
+        ChargingStation station = chargingStationRepository.findById(reservation.getChargingStationId())
+            .orElseThrow(() -> new IllegalArgumentException("Charging station not found"));
+
+
+        chargingStationRepository.save(station);
+
+        reservation.setStatus(Reservation.ReservationStatus.CHARGING);
+        reservation.setChargingStartTime(now);
+        
+        return reservationRepository.save(reservation);
+    }
+
+    @Override
+    public Reservation stopCharging(Long id) throws IllegalArgumentException {
+        Reservation reservation = reservationRepository.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("Reservation not found"));
+
+        if (reservation.getStatus() != Reservation.ReservationStatus.CHARGING) {
+            throw new IllegalArgumentException("Can only stop active charging sessions");
+        }
+
+        Date now = new Date();
+        reservation.setChargingEndTime(now);
+        
+        ChargingStation station = chargingStationRepository.findById(reservation.getChargingStationId())
+            .orElseThrow(() -> new IllegalArgumentException("Station not found"));
+        
+        Charger charger = station.getChargers()
+            .stream()
+            .filter(c -> c.getId().equals(reservation.getChargerId()))
+            .findFirst()
+            .orElseThrow(() -> new IllegalArgumentException("Charger not found"));
+
+        charger.setChargerStatus(Charger.Status.AVAILABLE);
+        chargingStationRepository.save(station);
+
+
+        double energyConsumed = reservation.getPrice() / charger.getPricePerKWh();
+        reservation.setEnergyConsumed(energyConsumed);
+        
+        reservation.setStatus(Reservation.ReservationStatus.COMPLETED);
+
+        return reservationRepository.save(reservation);
+    }
+
+    @Override
+    public Reservation processPayment(Long id, String paymentMethod) throws IllegalArgumentException {
+        Reservation reservation = reservationRepository.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("Reservation not found"));
+
+        if (reservation.getStatus() != Reservation.ReservationStatus.COMPLETED) {
+            throw new IllegalArgumentException("Can only pay for completed charging sessions");
+        }
+
+        if (reservation.getIsPaid()) {
+            throw new IllegalArgumentException("Reservation is already paid");
+        }
+
+        PaymentResult result = paymentService.processPayment(
+            paymentMethod,
+            reservation.getPrice(),
+            "EUR"
+        );
+
+        if (!result.isSuccess()) {
+            throw new IllegalArgumentException("Payment failed: " + result.getErrorMessage());
+        }
+
+        reservation.setPaymentMethod(paymentMethod);
+        reservation.setIsPaid(true);
+        reservation.setStatus(Reservation.ReservationStatus.PAID);
+
+        return reservationRepository.save(reservation);
     }
 }

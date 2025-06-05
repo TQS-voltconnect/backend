@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import pt.ua.tqs.voltconnect.models.Charger;
 import pt.ua.tqs.voltconnect.repositories.ChargerRepository;
 import pt.ua.tqs.voltconnect.services.ChargerService;
+import pt.ua.tqs.voltconnect.models.ChargingStation;
 
 import java.util.List;
 import java.util.Optional;
@@ -32,22 +33,12 @@ public class ChargerServiceImpl implements ChargerService {
 
     @Override
     public Charger saveCharger(Charger charger) {
-        // Atribui automaticamente o preço e velocidade de carregamento com base no tipo
-        if (charger.getChargerType() != null) {
-            switch (charger.getChargerType()) {
-                case AC1 -> {
-                    charger.setPricePerKWh(0.15);
-                    charger.setChargingSpeed(3.7);
-                }
-                case AC2 -> {
-                    charger.setPricePerKWh(0.25);
-                    charger.setChargingSpeed(22.0);
-                }
-                case DC -> {
-                    charger.setPricePerKWh(0.45);
-                    charger.setChargingSpeed(50.0);
-                }
-            }
+        if (charger.getPricePerKWh() == null || charger.getPricePerKWh() <= 0) {
+            throw new IllegalArgumentException("Price per kWh must be a positive value");
+        }
+
+        if (charger.getChargingSpeed() == null || charger.getChargingSpeed() <= 0) {
+            throw new IllegalArgumentException("Charging speed must be a positive value");
         }
 
         return chargerRepository.save(charger);
@@ -55,6 +46,15 @@ public class ChargerServiceImpl implements ChargerService {
 
     @Override
     public void deleteCharger(Long id) {
-        chargerRepository.deleteById(id);
+        Charger charger = chargerRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Charger not found"));
+
+        ChargingStation station = charger.getChargingStation();
+        if (station != null) {
+            station.removeCharger(charger);
+        }
+
+        chargerRepository.delete(charger);
     }
+
 }

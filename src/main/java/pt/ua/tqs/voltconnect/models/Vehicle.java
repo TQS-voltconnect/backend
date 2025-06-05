@@ -15,6 +15,12 @@ public class Vehicle {
 
     @Id
     private String id;
+    /**
+     * Bidirectional relationship with Brand.
+     * This circular dependency is intentional and required for JPA entity mapping.
+     * Serialization issues are handled with @JsonBackReference/@JsonManagedReference.
+     * See SonarQube issue: this is a justified exception for ORM navigation.
+     */
     @ManyToOne
     @JoinColumn(name = "brand_id")
     @JsonBackReference

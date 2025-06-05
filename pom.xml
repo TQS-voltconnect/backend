@@ -28,6 +28,7 @@
         <selenium.version>4.21.0</selenium.version>
         <sonar.organization>tqs-voltconnect</sonar.organization>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
+        <sonar.coverage.jacoco.xmlReportPaths>target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
     </properties>
 
     <dependencies>
@@ -196,6 +197,12 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-testcontainers</artifactId>
             <scope>test</scope>
+        </dependency>
+
+        <!-- Micrometer Prometheus registry -->
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
         </dependency>
     </dependencies>
 

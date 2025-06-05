@@ -1,4 +1,4 @@
-package pt.ua.tqs.voltconnect.integration;
+package pt.ua.tqs.voltconnect.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -8,7 +8,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import pt.ua.tqs.voltconnect.controllers.ReservationController;
 import pt.ua.tqs.voltconnect.models.Reservation;
 import pt.ua.tqs.voltconnect.services.ReservationService;
 
@@ -18,12 +17,14 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(ReservationController.class)
-class ReservationControllerIntegrationTest {
+class ReservationControllerTest {
 
         @Autowired
         private MockMvc mockMvc;
@@ -104,4 +105,96 @@ class ReservationControllerIntegrationTest {
                 mockMvc.perform(get("/api/reservations/9999"))
                                 .andExpect(status().isNotFound());
         }
+
+        @Test
+        void cancelReservation_Success() throws Exception {
+                mockMvc.perform(delete("/api/reservations/1"))
+                                .andExpect(status().isOk());
+
+                verify(reservationService).cancelReservation(1L);
+        }
+
+        @Test
+        void cancelReservation_InvalidId_BadRequest() throws Exception {
+                doThrow(new IllegalArgumentException("Invalid ID"))
+                                .when(reservationService).cancelReservation(999L);
+
+                mockMvc.perform(delete("/api/reservations/999"))
+                                .andExpect(status().isBadRequest())
+                                .andExpect(content().string("Invalid ID"));
+        }
+
+        @Test
+        void startCharging_Success() throws Exception {
+                sampleReservation.setStatus(Reservation.ReservationStatus.CHARGING);
+                when(reservationService.startCharging(1L)).thenReturn(sampleReservation);
+
+                mockMvc.perform(post("/api/reservations/1/start"))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.id").value(1))
+                                .andExpect(jsonPath("$.status").value("CHARGING"));
+        }
+
+        @Test
+        void startCharging_InvalidId_BadRequest() throws Exception {
+                doThrow(new IllegalArgumentException("Invalid ID"))
+                                .when(reservationService).startCharging(999L);
+
+                mockMvc.perform(post("/api/reservations/999/start"))
+                                .andExpect(status().isBadRequest())
+                                .andExpect(jsonPath("$.message").value("Invalid ID"));
+        }
+
+        @Test
+        void stopCharging_Success() throws Exception {
+                sampleReservation.setStatus(Reservation.ReservationStatus.COMPLETED);
+                when(reservationService.stopCharging(1L)).thenReturn(sampleReservation);
+
+                mockMvc.perform(post("/api/reservations/1/stop"))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.id").value(1))
+                                .andExpect(jsonPath("$.status").value("COMPLETED"));
+        }
+
+        @Test
+        void stopCharging_InvalidId_BadRequest() throws Exception {
+                doThrow(new IllegalArgumentException("Stop failed"))
+                                .when(reservationService).stopCharging(999L);
+
+                mockMvc.perform(post("/api/reservations/999/stop"))
+                                .andExpect(status().isBadRequest())
+                                .andExpect(content().string("Stop failed"));
+        }
+
+        @Test
+        void processPayment_Success() throws Exception {
+                sampleReservation.setStatus(Reservation.ReservationStatus.PAID);
+                when(reservationService.processPayment(1L, "card")).thenReturn(sampleReservation);
+
+                String payload = objectMapper
+                                .writeValueAsString(new pt.ua.tqs.voltconnect.models.PaymentRequest("card"));
+
+                mockMvc.perform(post("/api/reservations/1/pay")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(payload))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.id").value(1))
+                                .andExpect(jsonPath("$.status").value("PAID"));
+        }
+
+        @Test
+        void processPayment_Invalid_BadRequest() throws Exception {
+                doThrow(new IllegalArgumentException("Payment failed"))
+                                .when(reservationService).processPayment(999L, "card");
+
+                String payload = objectMapper
+                                .writeValueAsString(new pt.ua.tqs.voltconnect.models.PaymentRequest("card"));
+
+                mockMvc.perform(post("/api/reservations/999/pay")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(payload))
+                                .andExpect(status().isBadRequest())
+                                .andExpect(content().string("Payment failed"));
+        }
+
 }

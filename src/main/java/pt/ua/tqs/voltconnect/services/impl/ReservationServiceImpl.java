@@ -294,13 +294,7 @@ public class ReservationServiceImpl implements ReservationService {
         ChargingStation station = chargingStationRepository.findById(reservation.getChargingStationId())
             .orElseThrow(() -> new IllegalArgumentException("Charging station not found"));
 
-        Charger charger = station.getChargers()
-            .stream()
-            .filter(c -> c.getId().equals(reservation.getChargerId()))
-            .findFirst()
-            .orElseThrow(() -> new IllegalArgumentException("Charger not found"));
 
-        charger.setChargerStatus(Charger.Status.OCCUPIED);
         chargingStationRepository.save(station);
 
         reservation.setStatus(Reservation.ReservationStatus.CHARGING);

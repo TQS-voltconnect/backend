@@ -46,15 +46,7 @@ public class ReservationMaintenanceServiceImpl implements ReservationMaintenance
 
             Charger charger = chargerRepository.findById(reservation.getChargerId()).orElse(null);
 
-            if (reservation.getStatus() == ReservationStatus.SCHEDULED && end.before(now)) {
-                reservation.setStatus(ReservationStatus.EXPIRED);
-                reservationRepository.save(reservation);
-                if (charger != null) {
-                    charger.setChargerStatus(Charger.Status.AVAILABLE);
-                    chargerRepository.save(charger);
-                }
-                logger.info("Expired reservation ID {} (ended at {})", reservation.getId(), end);
-            } else if (reservation.getStatus() == ReservationStatus.CHARGING && end.before(now)) {
+            if (reservation.getStatus() == ReservationStatus.CHARGING && end.before(now)) {
                 reservation.setStatus(ReservationStatus.COMPLETED);
                 reservationRepository.save(reservation);
                 if (charger != null) {

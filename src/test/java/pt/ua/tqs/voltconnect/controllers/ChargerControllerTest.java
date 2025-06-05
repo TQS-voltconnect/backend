@@ -147,7 +147,9 @@ class ChargerControllerTest {
         ResponseEntity<Charger> response = chargerController.updateCharger(chargerId, updatedCharger);
 
         assertEquals(200, response.getStatusCode().value());
-        assertEquals(Charger.Type.DC, response.getBody().getChargerType());
+        Charger responseBody = response.getBody();
+        assertNotNull(responseBody);
+        assertEquals(Charger.Type.DC, responseBody.getChargerType());
         verify(chargerService, times(1)).getChargerById(chargerId);
         verify(chargerService, times(1)).saveCharger(existingCharger);
     }

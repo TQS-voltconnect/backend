@@ -12,6 +12,7 @@ import pt.ua.tqs.voltconnect.services.VehicleService;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -84,6 +85,14 @@ class VehicleControllerTest {
         assertEquals(1, responseBody.size());
         assertEquals(vehicleDTO.getId(), responseBody.get(0).getId());
         verify(vehicleService, times(1)).getVehiclesByBrand("Test Brand");
+    }
+
+    @Test
+    void getByBrand_WhenNoVehiclesFound_ShouldReturnNotFound() {
+        when(vehicleService.getVehiclesByBrand("Test Brand")).thenReturn(Collections.emptyList());
+        ResponseEntity<List<VehicleDTO>> response = vehicleController.getByBrand("Test Brand");
+        assertTrue(response.getStatusCode().is4xxClientError());
+        assertNull(response.getBody());
     }
 
     @Test

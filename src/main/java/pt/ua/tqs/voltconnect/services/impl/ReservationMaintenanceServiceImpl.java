@@ -25,13 +25,13 @@ public class ReservationMaintenanceServiceImpl implements ReservationMaintenance
     private final ChargerRepository chargerRepository;
 
     public ReservationMaintenanceServiceImpl(ReservationRepository reservationRepository,
-                                             ChargerRepository chargerRepository) {
+            ChargerRepository chargerRepository) {
         this.reservationRepository = reservationRepository;
         this.chargerRepository = chargerRepository;
     }
 
     @Override
-    @Scheduled(fixedRate = 30 * 1000) // Corre a cada 30 segundos
+    @Scheduled(fixedRate = 30 * 1000)
     @Transactional
     public void maintainReservationAndChargerStatus() {
         logger.info("Running scheduled maintenance at {}", new Date());
@@ -42,34 +42,39 @@ public class ReservationMaintenanceServiceImpl implements ReservationMaintenance
         for (Reservation reservation : reservations) {
             Date start = reservation.getStartTime();
             Long chargingTime = reservation.getChargingTime() != null ? reservation.getChargingTime() : 0L;
-            Date end = new Date(start.getTime() + chargingTime * 60000); // chargingTime em minutos
+            Date end = new Date(start.getTime() + chargingTime * 60000);
 
             Charger charger = chargerRepository.findById(reservation.getChargerId()).orElse(null);
             if (charger == null) {
-                logger.warn("Charger with ID {} not found for reservation {}", reservation.getChargerId(), reservation.getId());
+                logger.warn("Charger with ID {} not found for reservation {}", reservation.getChargerId(),
+                        reservation.getId());
                 continue;
             }
 
-            // Caso: reserva terminou mas não foi marcada como EXPIRADA
-            if (end.before(now)
-                    && reservation.getStatus() != ReservationStatus.CANCELLED
-                    && reservation.getStatus() != ReservationStatus.EXPIRED) {
+            if (reservation.getStatus() == ReservationStatus.CHARGING && end.before(now)) {
+                reservation.setStatus(ReservationStatus.COMPLETED);
+                reservationRepository.save(reservation);
 
-                logger.info("Expiring reservation ID {} (ended at {})", reservation.getId(), end);
+                charger.setChargerStatus(Charger.Status.AVAILABLE);
+                chargerRepository.save(charger);
+
+                logger.info("Completed reservation ID {} (ended at {})", reservation.getId(), end);
+            } else if (reservation.getStatus() == ReservationStatus.SCHEDULED && start.before(now) && end.after(now)) {
+                charger.setChargerStatus(Charger.Status.OCCUPIED);
+                reservation.setStatus(ReservationStatus.CHARGING);
+                reservationRepository.save(reservation);
+                chargerRepository.save(charger);
+
+                logger.info("Reservation ID {} is now CHARGING. Charger ID {} set to OCCUPIED", reservation.getId(),
+                        charger.getId());
+            } else if (reservation.getStatus() == ReservationStatus.SCHEDULED && end.before(now)) {
                 reservation.setStatus(ReservationStatus.EXPIRED);
                 reservationRepository.save(reservation);
 
                 charger.setChargerStatus(Charger.Status.AVAILABLE);
                 chargerRepository.save(charger);
 
-                logger.info("Charger ID {} set to AVAILABLE", charger.getId());
-            }
-            // Caso: reserva está a decorrer e ainda marcada como SCHEDULED
-            else if (start.before(now) && end.after(now) && reservation.getStatus() == ReservationStatus.SCHEDULED) {
-
-                logger.info("Reservation ID {} is currently active. Setting charger ID {} to OCCUPIED", reservation.getId(), charger.getId());
-                charger.setChargerStatus(Charger.Status.OCCUPIED);
-                chargerRepository.save(charger);
+                logger.info("Expired reservation ID {} (ended at {})", reservation.getId(), end);
             }
         }
 

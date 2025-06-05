@@ -33,21 +33,12 @@ public class ChargerServiceImpl implements ChargerService {
 
     @Override
     public Charger saveCharger(Charger charger) {
-        if (charger.getChargerType() != null) {
-            switch (charger.getChargerType()) {
-                case AC1 -> {
-                    charger.setPricePerKWh(0.15);
-                    charger.setChargingSpeed(3.7);
-                }
-                case AC2 -> {
-                    charger.setPricePerKWh(0.25);
-                    charger.setChargingSpeed(22.0);
-                }
-                case DC -> {
-                    charger.setPricePerKWh(0.45);
-                    charger.setChargingSpeed(50.0);
-                }
-            }
+        if (charger.getPricePerKWh() == null || charger.getPricePerKWh() <= 0) {
+            throw new IllegalArgumentException("Price per kWh must be a positive value");
+        }
+
+        if (charger.getChargingSpeed() == null || charger.getChargingSpeed() <= 0) {
+            throw new IllegalArgumentException("Charging speed must be a positive value");
         }
 
         return chargerRepository.save(charger);

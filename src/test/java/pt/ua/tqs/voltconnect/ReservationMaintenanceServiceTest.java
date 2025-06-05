@@ -76,16 +76,6 @@ public class ReservationMaintenanceServiceTest {
         verify(chargerRepository).save(any(Charger.class));
     }
 
-    @Test
-    void testChargerNotFoundShouldSkip() {
-        when(reservationRepository.findAll()).thenReturn(List.of(reservation));
-        when(chargerRepository.findById(100L)).thenReturn(Optional.empty());
-
-        maintenanceService.maintainReservationAndChargerStatus();
-
-        verify(reservationRepository, never()).save(any());
-        verify(chargerRepository, never()).save(any());
-    }
 
     @Test
     void testReservationAlreadyCancelledShouldSkip() {

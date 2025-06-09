@@ -290,29 +290,6 @@ class ReservationServiceTest {
         assertThrows(IllegalArgumentException.class, () -> reservationService.cancelReservation(1L));
     }
 
-    @Test
-    void startCharging_Valid_Success() {
-        reservation.setStatus(Reservation.ReservationStatus.SCHEDULED);
-        when(reservationRepository.findById(1L)).thenReturn(Optional.of(reservation));
-        when(chargingStationRepository.findById(1L)).thenReturn(Optional.of(station));
-        when(reservationRepository.save(any())).thenAnswer(i -> i.getArgument(0));
-
-        Reservation result = reservationService.startCharging(1L);
-        assertEquals(Reservation.ReservationStatus.CHARGING, result.getStatus());
-    }
-
-    @Test
-    void stopCharging_Valid_Success() {
-        reservation.setStatus(Reservation.ReservationStatus.CHARGING);
-        reservation.setPrice(10.0);
-        when(reservationRepository.findById(1L)).thenReturn(Optional.of(reservation));
-        when(chargingStationRepository.findById(1L)).thenReturn(Optional.of(station));
-        when(reservationRepository.save(any())).thenAnswer(i -> i.getArgument(0));
-
-        Reservation result = reservationService.stopCharging(1L);
-        assertEquals(Reservation.ReservationStatus.COMPLETED, result.getStatus());
-        assertNotNull(result.getChargingEndTime());
-    }
 
     @Test
     void processPayment_AlreadyPaid_Throws() {

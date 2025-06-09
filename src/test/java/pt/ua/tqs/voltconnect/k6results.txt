@@ -1,0 +1,46 @@
+INFO[0054] Reservation passed (VU: 38, ITER: 54) - Status: 200 - Body: 
+  █ THRESHOLDS 
+console
+    http_req_duration
+    ✓ 'p(95)<100' p(95)=15.07ms
+console
+    http_req_failed
+    ✓ 'rate<0.01' rate=0.00%
+console
+    response_time
+    ✓ 'avg<20' avg=10.65ms
+console
+    success_rate
+    ✓ 'rate==1' rate=1.00%
+console
+INFO[0054] Reservation passed (VU: 98, ITER: 54) - Status: 200 - Body: {
+  █ TOTAL RESULTS 
+console
+    checks_total.......................: 326116 181.161693/s
+    checks_succeeded...................: 100.00%  326116 out of 326116
+    checks_failed......................: 0.00% 0 out of 326116
+INFO[0054] Reservation passed (VU: 19, ITER: 54) - Status: 200 - Body: {
+    CUSTOM
+    response_time...........................................................: avg=10.65ms min=2.49ms med=10.69ms max=60.88ms p(90)=13.97ms p(95)=15.07ms 
+    success_rate............................................................: 100%  326116 out of 326116
+INFO[0054] Reservation passed (VU: 26, ITER: 54) - Status: 200 - Body: {
+    HTTP
+    http_req_duration.......................................................: avg=10.65ms min=2.49ms med=10.69ms max=60.88ms p(90)=13.97ms p(95)=15.07ms
+    http_req_failed.........................................................: 0.00% 0 out of 326116
+    http_reqs...............................................................: 326116 90.580846/s
+
+    EXECUTION
+    iteration_duration......................................................: avg=1.01s   min=1s     med=1.01s   max=1.06s   p(90)=1.01s   p(95)=1.01s  
+    iterations..............................................................: 326116 90.580846/s
+    vus.....................................................................: 1      min=1                max=150
+    vus_max.................................................................: 150    min=150              max=150
+    
+    NETWORK
+    data_received...........................................................: 49 MB  27 kB/s
+    data_sent...............................................................: 48 MB  27 kB/s
+
+
+
+
+running (30m00.1s), 000/150 VUs, 326116 complete and 0 interrupted iterations
+default ✓ [======================================] 000/150 VUs  30m0s

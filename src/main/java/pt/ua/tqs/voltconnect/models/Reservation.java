@@ -38,11 +38,14 @@ public class Reservation {
     private Double energyConsumed;
 
     @Enumerated(EnumType.STRING)
+    @Builder.Default
     private ReservationStatus status = ReservationStatus.SCHEDULED;
 
     private Date chargingStartTime;
     private Date chargingEndTime;
     private String paymentMethod;
+
+    @Builder.Default
     private Boolean isPaid = false;
 
     public enum ReservationStatus {

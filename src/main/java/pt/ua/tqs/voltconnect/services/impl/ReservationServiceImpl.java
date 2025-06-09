@@ -4,10 +4,6 @@ package pt.ua.tqs.voltconnect.services.impl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import pt.ua.tqs.voltconnect.models.Charger;
 import pt.ua.tqs.voltconnect.models.ChargingStation;
 import pt.ua.tqs.voltconnect.models.Reservation;
@@ -21,7 +17,6 @@ import pt.ua.tqs.voltconnect.repositories.VehicleRepository;
 import pt.ua.tqs.voltconnect.services.PaymentService;
 import pt.ua.tqs.voltconnect.repositories.UserRepository;
 
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.Optional;
 import java.util.List;
@@ -49,28 +44,7 @@ public class ReservationServiceImpl implements ReservationService {
         this.vehicleRepository = vehicleRepository;
         this.userRepository = userRepository;
     }
-
-    private static class CurvePoint {
-        private int percentage;
-        private double power;
-
-        public int getPercentage() {
-            return percentage;
-        }
-
-        public void setPercentage(int percentage) {
-            this.percentage = percentage;
-        }
-
-        public double getPower() {
-            return power;
-        }
-
-        public void setPower(double power) {
-            this.power = power;
-        }
-    }
-
+    
     private void validateReservationInput(Reservation reservation) {
 
         if (reservation.getVehicleId() == null) {

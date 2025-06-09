@@ -8,7 +8,6 @@ import pt.ua.tqs.voltconnect.models.Reservation.ReservationStatus;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Date;
 import java.util.List;
 
 @Component

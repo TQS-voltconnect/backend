@@ -12,4 +12,6 @@ public interface ReservationService {
     Iterable<Reservation> getAllReservations();
     void cancelReservation(Long id) throws IllegalArgumentException;
     Reservation processPayment(Long id, String paymentMethod) throws IllegalArgumentException;
+    boolean isReservationOwner(Long reservationId, Long userId);
+    Iterable<Reservation> getReservationsForUser(Long userId);
 }

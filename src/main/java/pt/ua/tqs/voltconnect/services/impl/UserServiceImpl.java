@@ -1,7 +1,8 @@
 package pt.ua.tqs.voltconnect.services.impl;
 
-
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import pt.ua.tqs.voltconnect.models.User;
 import pt.ua.tqs.voltconnect.repositories.UserRepository;
@@ -15,6 +16,12 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Override
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
+    }
 
     @Override
     public List<User> getAllUsers() {

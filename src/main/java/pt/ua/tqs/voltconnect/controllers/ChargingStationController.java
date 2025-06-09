@@ -1,6 +1,7 @@
 package pt.ua.tqs.voltconnect.controllers;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import pt.ua.tqs.voltconnect.models.ChargingStation;
 import pt.ua.tqs.voltconnect.services.ChargingStationService;
@@ -24,6 +25,7 @@ public class ChargingStationController {
 
     @Operation(summary = "Create a new station", description = "Add a new charging station to the system.")
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'TECHNICIAN')")
     public ResponseEntity<ChargingStation> createSimpleStation(
             @RequestBody ChargingStation station) {
         ChargingStation savedStation = stationService.saveStation(station);
@@ -47,15 +49,15 @@ public class ChargingStationController {
         }
     }
 
-    @Operation(summary = "Delete station", description = "Delete a charging station by its ID.")
+    @Operation(summary = "Delete station", description = "Remove a charging station from the system.")
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteStation(@PathVariable Long id) {
+    @PreAuthorize("hasAnyRole('ADMIN', 'TECHNICIAN')")
+    public ResponseEntity<?> deleteStation(@PathVariable Long id) {
         try {
             stationService.deleteStation(id);
-            return ResponseEntity.noContent().build(); 
+            return ResponseEntity.ok().build();
         } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build(); 
+            return ResponseEntity.notFound().build();
         }
     }
-
 }

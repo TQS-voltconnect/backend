@@ -227,4 +227,16 @@ public class ReservationServiceImpl implements ReservationService {
 
         return reservationRepository.save(reservation);
     }
+
+    @Override
+    public boolean isReservationOwner(Long reservationId, Long userId) {
+        return reservationRepository.findById(reservationId)
+                .map(reservation -> reservation.getUserId().equals(userId))
+                .orElse(false);
+    }
+
+    @Override
+    public Iterable<Reservation> getReservationsForUser(Long userId) {
+        return reservationRepository.findByUserId(userId);
+    }
 }

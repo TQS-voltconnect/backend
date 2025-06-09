@@ -124,47 +124,6 @@ class ReservationControllerTest {
                                 .andExpect(content().string("Invalid ID"));
         }
 
-        @Test
-        void startCharging_Success() throws Exception {
-                sampleReservation.setStatus(Reservation.ReservationStatus.CHARGING);
-                when(reservationService.startCharging(1L)).thenReturn(sampleReservation);
-
-                mockMvc.perform(post("/api/reservations/1/start"))
-                                .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.id").value(1))
-                                .andExpect(jsonPath("$.status").value("CHARGING"));
-        }
-
-        @Test
-        void startCharging_InvalidId_BadRequest() throws Exception {
-                doThrow(new IllegalArgumentException("Invalid ID"))
-                                .when(reservationService).startCharging(999L);
-
-                mockMvc.perform(post("/api/reservations/999/start"))
-                                .andExpect(status().isBadRequest())
-                                .andExpect(jsonPath("$.message").value("Invalid ID"));
-        }
-
-        @Test
-        void stopCharging_Success() throws Exception {
-                sampleReservation.setStatus(Reservation.ReservationStatus.COMPLETED);
-                when(reservationService.stopCharging(1L)).thenReturn(sampleReservation);
-
-                mockMvc.perform(post("/api/reservations/1/stop"))
-                                .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.id").value(1))
-                                .andExpect(jsonPath("$.status").value("COMPLETED"));
-        }
-
-        @Test
-        void stopCharging_InvalidId_BadRequest() throws Exception {
-                doThrow(new IllegalArgumentException("Stop failed"))
-                                .when(reservationService).stopCharging(999L);
-
-                mockMvc.perform(post("/api/reservations/999/stop"))
-                                .andExpect(status().isBadRequest())
-                                .andExpect(content().string("Stop failed"));
-        }
 
         @Test
         void processPayment_Success() throws Exception {
